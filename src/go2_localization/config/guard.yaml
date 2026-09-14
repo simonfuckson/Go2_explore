@@ -1,0 +1,9 @@
+global_pose_topic: /localization/pose
+upstream_health_topic: /localization/ndt_ok
+map_frame: map
+timeout_sec: 1.0
+max_jump_m: 0.8
+max_jump_yaw_deg: 20.0
+good_required_count: 5
+# While already GOOD, isolated bad pose samples remain DEGRADED/usable.
+lost_required_count: 3

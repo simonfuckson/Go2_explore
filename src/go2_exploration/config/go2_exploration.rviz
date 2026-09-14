@@ -1,0 +1,388 @@
+# GO2 online exploration, ROS Noetic RViz.
+# Default view subscribes to the active exploration pipeline only.
+# Dense clouds and alternate map layers are optional and disabled initially.
+Panels:
+  - Class: go2_exploration/StatusPanel
+    Name: 探索状态
+  - Class: rviz/Displays
+    Name: Displays
+    Property Tree Widget:
+      Expanded:
+        - /Global Options1
+      Splitter Ratio: 0.56
+Preferences:
+  PromptSaveOnExit: false
+Toolbars:
+  toolButtonStyle: 2
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz/MarkerArray
+      Name: 相机支架过滤范围（黄预览/绿启用）
+      Enabled: true
+      Value: true
+      Marker Topic: /exploration/self_filter/boxes
+      Queue Size: 1
+      Namespaces: {}
+    - Class: rviz/PointCloud2
+      Name: 相机过滤候选点（预览不删除）
+      Enabled: false
+      Value: false
+      Topic: /exploration/self_filter/candidate_points
+      Queue Size: 1
+      Style: Points
+      Size (Pixels): 4
+      Color Transformer: FlatColor
+      Color: 255; 40; 40
+      Position Transformer: XYZ
+      Decay Time: 1
+    - Class: rviz/Image
+      Name: D435i 视频
+      Enabled: true
+      Value: true
+      Image Topic: /exploration_camera/color/image_raw
+      Transport Hint: raw
+      Queue Size: 1
+      Normalize Range: true
+      Min Value: 0
+      Max Value: 1
+      Median window: 5
+    - Class: rviz/Map
+      Name: 01 在线观测地图
+      Enabled: true
+      Value: true
+      Topic: /nav_static_map
+      Alpha: 1
+      Color Scheme: map
+      Draw Behind: true
+      Use Timestamp: false
+    - Class: rviz/Map
+      Name: 02 局部避障代价
+      Enabled: true
+      Value: true
+      Topic: /move_base/local_costmap/costmap
+      Alpha: 0.5
+      Color Scheme: costmap
+      Draw Behind: false
+      Use Timestamp: false
+    - Class: rviz/Polygon
+      Name: 03 GO2轮廓（青色）
+      Enabled: true
+      Value: true
+      Topic: /move_base/local_costmap/footprint
+      Alpha: 1
+      Color: 0; 230; 230
+      Queue Size: 2
+    - Class: rviz/Axes
+      Name: 04 机身轴（红X前/绿Y左/蓝Z上）
+      Enabled: true
+      Value: true
+      Reference Frame: base_link
+      Length: 0.45
+      Radius: 0.025
+    - Class: rviz/MarkerArray
+      Name: 05 前沿任务
+      Enabled: true
+      Value: true
+      Marker Topic: /explore/frontiers
+      Queue Size: 2
+      Namespaces: {}
+    - Class: rviz/Pose
+      Name: 06 探索目标（紫色）
+      Enabled: true
+      Value: true
+      Topic: /explore/selected_goal
+      Queue Size: 2
+      Shape: Arrow
+      Alpha: 1
+      Color: 190; 65; 255
+      Shaft Length: 0.35
+      Shaft Radius: 0.04
+      Head Length: 0.15
+      Head Radius: 0.09
+    - Class: rviz/Path
+      Name: 07 全局规划路径（绿色）
+      Enabled: true
+      Value: true
+      Topic: /move_base/GlobalPlanner/plan
+      Queue Size: 2
+      Buffer Length: 1
+      Alpha: 1
+      Color: 20; 210; 75
+      Line Style: Billboards
+      Line Width: 0.045
+      Pose Style: None
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0.05
+    - Class: rviz/Path
+      Name: 08 TEB局部轨迹（橙色）
+      Enabled: true
+      Value: true
+      Topic: /move_base/TebLocalPlannerROS/local_plan
+      Queue Size: 2
+      Buffer Length: 1
+      Alpha: 1
+      Color: 255; 140; 20
+      Line Style: Billboards
+      Line Width: 0.065
+      Pose Style: None
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0.08
+    - Class: rviz/Path
+      Name: 09 机身中心轨迹（蓝色）
+      Enabled: true
+      Value: true
+      Topic: /exploration/robot_path
+      Queue Size: 1
+      Buffer Length: 1
+      Alpha: 0.8
+      Color: 55; 135; 255
+      Line Style: Billboards
+      Line Width: 0.025
+      Pose Style: None
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+    - Class: rviz/PointCloud2
+      Name: 10 当前帧障碍点（红色）
+      Enabled: true
+      Value: true
+      Topic: /terrain/obstacle_points
+      Queue Size: 1
+      Alpha: 0.85
+      Color: 255; 60; 60
+      Color Transformer: FlatColor
+      Position Transformer: XYZ
+      Style: Points
+      Size (Pixels): 3
+      Size (m): 0.03
+      Decay Time: 0
+      Selectable: false
+      Use Fixed Frame: true
+      Unreliable: false
+    - Class: rviz/MarkerArray
+      Name: 11 候选朝向
+      Enabled: true
+      Value: true
+      Marker Topic: /explore/view_candidates
+      Queue Size: 1
+    - Class: rviz/Marker
+      Name: 12 后方地面盲区
+      Enabled: true
+      Value: true
+      Marker Topic: /exploration/rear_blind_zone
+      Queue Size: 1
+    - Class: rviz/Group
+      Name: 更多地图与点云（按需勾选）
+      Enabled: true
+      Displays:
+        - Class: rviz/Axes
+          Name: 雷达轴 lidar_link（原安装俯角39度）
+          Enabled: false
+          Value: false
+          Reference Frame: lidar_link
+          Length: 0.3
+          Radius: 0.012
+        - Class: rviz/Axes
+          Name: 地图原点 map（启动时机身中心）
+          Enabled: false
+          Value: false
+          Reference Frame: map
+          Length: 0.6
+          Radius: 0.018
+        - Class: rviz/Map
+          Name: 地面覆盖记忆（灰色尚未覆盖）
+          Enabled: false
+          Value: false
+          Topic: /exploration/coverage_map
+          Alpha: 0.8
+          Color Scheme: map
+          Draw Behind: false
+          Use Timestamp: false
+        - Class: rviz/Map
+          Name: 覆盖观测年龄（0至100秒）
+          Enabled: false
+          Value: false
+          Topic: /exploration/coverage_age
+          Alpha: 0.7
+          Color Scheme: costmap
+          Draw Behind: false
+          Use Timestamp: false
+        - Class: rviz/Map
+          Name: 未膨胀局部观测
+          Enabled: false
+          Value: false
+          Topic: /exploration/observed_local_map
+          Alpha: 0.8
+          Color Scheme: map
+          Draw Behind: false
+          Use Timestamp: false
+        - Class: rviz/Map
+          Name: 探索任务图（含未覆盖地面，非导航禁行图）
+          Enabled: false
+          Value: false
+          Topic: /exploration/frontier_map
+          Alpha: 0.8
+          Color Scheme: map
+          Draw Behind: false
+          Use Timestamp: false
+        - Class: rviz/Map
+          Name: 全局规划代价（含膨胀）
+          Enabled: false
+          Value: false
+          Topic: /move_base/global_costmap/costmap
+          Alpha: 0.45
+          Color Scheme: costmap
+          Draw Behind: false
+          Use Timestamp: false
+        - Class: rviz/Pose
+          Name: move_base当前执行目标
+          Enabled: false
+          Value: false
+          Topic: /move_base/current_goal
+          Queue Size: 1
+          Shape: Axes
+          Axes Length: 0.3
+          Axes Radius: 0.02
+        - Class: rviz/PointCloud2
+          Name: 当前帧配准点云（三维观察）
+          Enabled: false
+          Value: false
+          Topic: /cloud_registered_odom
+          Queue Size: 1
+          Alpha: 0.5
+          Color: 170; 180; 195
+          Color Transformer: FlatColor
+          Position Transformer: XYZ
+          Style: Points
+          Size (Pixels): 2
+          Size (m): 0.02
+          Decay Time: 0
+          Selectable: false
+          Use Fixed Frame: true
+          Unreliable: false
+        - Class: rviz/PointCloud2
+          Name: 贝叶斯静态积累点云（较耗资源）
+          Enabled: false
+          Value: false
+          Topic: /go2_mapping/static_map_cloud
+          Queue Size: 1
+          Alpha: 0.5
+          Color: 165; 190; 210
+          Color Transformer: FlatColor
+          Position Transformer: XYZ
+          Style: Points
+          Size (Pixels): 1
+          Size (m): 0.02
+          Decay Time: 0
+          Selectable: false
+          Use Fixed Frame: true
+          Unreliable: false
+        - Class: rviz/PointCloud2
+          Name: 当前帧安全地面（绿色）
+          Enabled: false
+          Value: false
+          Topic: /terrain/ground_points
+          Queue Size: 1
+          Alpha: 0.45
+          Color: 90; 205; 120
+          Color Transformer: FlatColor
+          Position Transformer: XYZ
+          Style: Points
+          Size (Pixels): 2
+          Size (m): 0.02
+          Decay Time: 0
+          Selectable: false
+          Use Fixed Frame: true
+          Unreliable: false
+        - Class: rviz/TF
+          Name: 完整TF树
+          Enabled: false
+          Value: false
+          Frame Timeout: 10
+          Frames:
+            All Enabled: true
+          Marker Scale: 0.35
+          Show Arrows: false
+          Show Axes: true
+          Show Names: true
+          Update Interval: 0.2
+        - Class: rviz/Grid
+          Name: 机身初始高度参考网格（非地面）
+          Enabled: false
+          Value: false
+          Alpha: 0.3
+          Cell Size: 1
+          Plane: XY
+          Plane Cell Count: 30
+          Normal Cell Count: 0
+          Color: 115; 125; 140
+          Reference Frame: <Fixed Frame>
+          Line Style:
+            Line Width: 0.01
+            Value: Lines
+          Offset:
+            X: 0
+            Y: 0
+            Z: 0
+  Enabled: true
+  Global Options:
+    Background Color: 32; 38; 46
+    Default Light: true
+    Fixed Frame: map
+    Frame Rate: 15
+  Name: root
+  # Exploration owns navigation goals. This viewer has camera/measurement tools.
+  Tools:
+    - Class: rviz/Interact
+      Hide Inactive Objects: true
+    - Class: rviz/MoveCamera
+    - Class: rviz/Select
+    - Class: rviz/FocusCamera
+    - Class: rviz/Measure
+  Value: true
+  Views:
+    Current:
+      Class: rviz/TopDownOrtho
+      Name: 当前俯视图
+      Target Frame: map
+      Near Clip Distance: 0.01
+      Scale: 65
+      Angle: 0
+      X: 0
+      Y: 0
+    Saved:
+      - Class: rviz/TopDownOrtho
+        Name: 房间俯视（固定地图）
+        Target Frame: map
+        Near Clip Distance: 0.01
+        Scale: 65
+        Angle: 0
+        X: 0
+        Y: 0
+      - Class: rviz/XYOrbit
+        Name: 三维观察（跟随车体）
+        Target Frame: base_link
+        Near Clip Distance: 0.01
+        Distance: 10
+        Pitch: 0.85
+        Yaw: 0.78
+        Focal Point:
+          X: 0
+          Y: 0
+          Z: 0
+        Focal Shape Fixed Size: true
+        Focal Shape Size: 0.05
+        Invert Z Axis: false
+Window Geometry:
+  Width: 1800
+  Height: 1000
+  X: 40
+  Y: 40
+  Hide Left Dock: false
+  Hide Right Dock: false

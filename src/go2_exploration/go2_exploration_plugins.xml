@@ -1,0 +1,12 @@
+<library path="lib/libgo2_exploration_plugins">
+  <class name="go2_exploration/ObservedObstacleLayer"
+         type="go2_exploration::ObservedObstacleLayer"
+         base_class_type="costmap_2d::Layer">
+    <description>Original local obstacle layer with uninflated observation export for exploration memory.</description>
+  </class>
+  <class name="go2_exploration/TebLocalPlannerROS"
+         type="go2_exploration::ForwardTebPlanner"
+         base_class_type="nav_core::BaseLocalPlanner">
+    <description>Exploration path alignment and forward execution using the original TEB optimizer.</description>
+  </class>
+</library>

@@ -1,0 +1,86 @@
+grid:
+  resolution: 0.15
+  min_x: -5.0
+  max_x: 5.0
+  min_y: -4.0
+  max_y: 4.0
+  reference_radius_cells: 3
+
+vehicle:
+  min_horizontal_range: 0.35
+  max_horizontal_range: 5.0
+
+surface:
+  min_points_per_cell: 1
+  # Patchwork++ ground is treated as a candidate only. Clearing is restricted
+  # to the surface connected to the nominal floor below the MID360.
+  ground_candidate_quantile: 0.10
+  ground_support_band: 0.15
+  # The 39-degree forward MID360 mount can have sparse, non-repeating floor
+  # returns close to the sensor, so anchors may be found within 1.2 m. The
+  # 0.25 m candidate tolerance lets an unsafe low stance remain observable;
+  # the independent fitted-height gate still rejects a genuinely low stance.
+  anchor_radius: 1.20
+  anchor_height_tolerance: 0.25
+  anchor_seed_height_band: 0.05
+  max_connected_slope_deg: 35.0
+  continuity_height_margin: 0.01
+  # Sustained smooth non-floor profiles from either Patchwork stream are
+  # treated as ignored slope, not local obstacles. This starts at the global
+  # slope-cost threshold so a Patchwork misclassification at 8-35 degrees
+  # cannot create a contradictory local hard obstacle. Only each cell's
+  # robust low-support band enters the fit, so same-column ceiling returns do
+  # not poison a real slope. Short steps, flat boxes, and walls still fail.
+  steep_unknown_min_slope_deg: 8.0
+  steep_unknown_max_slope_deg: 70.0
+  steep_unknown_min_run_cells: 3
+  steep_unknown_min_points_per_cell: 2
+  steep_unknown_max_step_delta: 0.04
+  steep_unknown_plane_huber: 0.02
+  steep_unknown_max_plane_rmse: 0.025
+  steep_unknown_max_point_residual: 0.05
+  obstacle_min_relative_height: 0.05
+  obstacle_max_relative_height: 1.50
+
+output:
+  publish_debug_clouds: false
+
+health:
+  input_timeout_sec: 0.60
+  min_input_points: 20
+  min_ground_points: 20
+  minimum_connected_ground_area_m2: 0.60
+  near_support_radius_m: 1.00
+  minimum_near_support_area_m2: 0.18
+  ground_sector_count: 8
+  # Robot-1's forward-tilted MID360 normally covers two or three of eight
+  # floor sectors near walls and after turns. Plane quality, connected area,
+  # near support and sensor-height checks remain mandatory; only the redundant
+  # angular-coverage gate is tuned to the measured sensor geometry.
+  minimum_ground_sectors: 2
+  minimum_cells_per_sector: 2
+  # Fit z=ax+by+c to the selected near-field ground component every frame.
+  # The intercept is the measured MID360 height above the local ramp plane;
+  # Startup/recovery uses the nominal envelope. Once healthy, a small bounded
+  # hysteresis tolerates gait bounce and plane bias at ramp transitions.
+  ground_plane_min_connected_cells: 12
+  ground_plane_maximum_radius_m: 1.50
+  ground_plane_min_planar_variance_m2: 0.01
+  ground_plane_huber_m: 0.03
+  ground_plane_max_rmse_m: 0.04
+  ground_plane_irls_iterations: 5
+  min_sensor_height_m: 0.43
+  max_sensor_height_m: 0.59
+  # 0.43-0.59 m to open; 0.41-0.61 m to remain open. Never bypasses RMSE,
+  # connected-ground, sparse-data, frequency or timeout checks.
+  sensor_height_hysteresis_m: 0.02
+  # Arming needs five clean frames. An already-open gate tolerates no more
+  # than three consecutive geometry-only misses and never for over 0.25 s.
+  open_after_consecutive_healthy_frames: 5
+  max_soft_geometry_failure_frames: 3
+  max_soft_geometry_failure_duration_sec: 0.25
+  max_processing_ms: 100.0
+  min_output_rate_hz: 8.0
+  min_rate_samples: 3
+  startup_grace_sec: 3.0
+  low_rate_hold_sec: 1.0

@@ -1,0 +1,7 @@
+<launch>
+  <!-- rostest creates a private master. No real SDK, lidar, or robot launch. -->
+  <node pkg="go2_navigation" type="go2_navigation_supervisor_node" name="go2_navigation_supervisor" required="true">
+    <param name="require_terrain_health" value="true"/>
+  </node>
+  <test test-name="manual_resume" pkg="go2_navigation" type="manual_resume_test.py" time-limit="120"/>
+</launch>

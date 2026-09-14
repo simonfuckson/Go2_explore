@@ -1,0 +1,15 @@
+resolution: 0.05
+padding_m: 0.50
+floor_min_z: -0.55
+floor_max_z: -0.05
+obstacle_min_z: 0.05
+obstacle_max_z: 0.70
+free_dilation_m: 0.20
+# Navigation applies its own footprint and cost gradient. Keep only one grid
+# cell of export-time padding so narrow mapped passages are not closed twice.
+obstacle_inflation_m: 0.03
+min_floor_points: 1
+min_obstacle_points: 1
+unknown_value: 205
+free_value: 254
+occupied_value: 0

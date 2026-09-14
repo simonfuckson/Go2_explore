@@ -1,0 +1,52 @@
+TebLocalPlannerROS:
+  odom_topic: /odom_nav
+  map_frame: map
+  teb_autosize: true
+  dt_ref: 0.30
+  dt_hysteresis: 0.10
+  min_samples: 5
+  max_samples: 50
+  global_plan_overwrite_orientation: true
+  allow_init_with_backwards_motion: false
+  max_global_plan_lookahead_dist: 3.0
+  global_plan_prune_distance: 1.0
+  exact_arc_length: true
+  feasibility_check_no_poses: 10
+  publish_feedback: true
+  max_vel_x: 0.60
+  # Reverse is permitted for short escape/alignment arcs and is bounded by
+  # the same value in go2_control/config/control.yaml.
+  max_vel_x_backwards: 0.18
+  max_vel_y: 0.00
+  max_vel_theta: 0.80
+  acc_lim_x: 0.60
+  acc_lim_theta: 0.80
+  # GO2 can rotate in place.  A non-zero Ackermann radius made otherwise
+  # valid trajectories fail feasibility checks near stale obstacle cells.
+  min_turning_radius: 0.0
+  footprint_model:
+    type: polygon
+    vertices: [[0.35, 0.155], [0.35, -0.155], [-0.35, -0.155], [-0.35, 0.155]]
+  xy_goal_tolerance: 0.15
+  yaw_goal_tolerance: 0.25
+  free_goal_vel: false
+  complete_global_plan: true
+  include_costmap_obstacles: true
+  # A 0.64 m passage leaves about 0.165 m per side around the 0.31 m body.
+  # Preserve a 0.10 m physical margin while allowing TEB to use the passage.
+  min_obstacle_dist: 0.10
+  inflation_dist: 0.25
+  include_dynamic_obstacles: false
+  no_inner_iterations: 5
+  no_outer_iterations: 4
+  optimization_activate: true
+  penalty_epsilon: 0.02
+  weight_kinematics_nh: 1000.0
+  weight_kinematics_forward_drive: 2000.0
+  weight_kinematics_turning_radius: 1.0
+  weight_obstacle: 80.0
+  weight_inflation: 0.50
+  enable_homotopy_class_planning: false
+  enable_multithreading: true
+  shrink_horizon_backup: true
+  oscillation_recovery: true

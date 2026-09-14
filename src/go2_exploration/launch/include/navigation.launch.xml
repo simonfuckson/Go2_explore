@@ -1,0 +1,15 @@
+<launch>
+  <node pkg="move_base" type="move_base" name="move_base" output="screen" required="true">
+    <rosparam command="load" file="$(find go2_navigation)/config/move_base.yaml"/>
+    <rosparam command="load" ns="global_costmap" file="$(find go2_navigation)/config/costmap_common.yaml"/>
+    <rosparam command="load" ns="global_costmap" file="$(find go2_navigation)/config/global_costmap_terrain.yaml"/>
+    <rosparam command="load" ns="local_costmap" file="$(find go2_navigation)/config/costmap_common.yaml"/>
+    <rosparam command="load" ns="local_costmap" file="$(find go2_navigation)/config/local_costmap_terrain.yaml"/>
+    <rosparam command="load" file="$(find go2_navigation)/config/global_planner.yaml"/>
+    <rosparam command="load" file="$(find go2_navigation)/config/teb.yaml"/>
+    <rosparam command="load" file="$(find go2_exploration)/config/exploration_overrides.yaml"/>
+    <remap from="odom" to="/odom_nav"/>
+    <remap from="cmd_vel" to="/cmd_vel_nav"/>
+    <remap from="/move_base_simple/goal" to="/exploration/manual_goal_disabled"/>
+  </node>
+</launch>

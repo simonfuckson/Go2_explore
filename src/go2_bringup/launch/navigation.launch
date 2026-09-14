@@ -1,0 +1,56 @@
+<launch>
+  <arg name="map_name" default="site01"/>
+  <arg name="map_root" default="$(env HOME)/go2_explore_ws/maps"/>
+  <arg name="start_lidar" default="true"/>
+  <arg name="use_real_sdk" default="false"/>
+  <arg name="network_interface" default="eth0"/>
+  <arg name="terrain_enabled" default="false"/>
+  <arg name="terrain_metadata" default=""/>
+  <arg name="terrain_sensor_height" default="0.51"/>
+  <arg name="terrain_health_timeout_sec" default="0.75"/>
+  <arg name="rviz" default="false"/>
+
+  <group if="$(arg start_lidar)">
+    <include file="$(find livox_ros_driver2)/launch_ROS1/msg_MID360.launch"/>
+  </group>
+  <include file="$(find go2_bringup)/launch/fast_lio.launch"/>
+  <group if="$(arg terrain_enabled)">
+    <include file="$(find go2_core)/launch/core.launch">
+      <arg name="enable_costmap_cloud" value="false"/>
+    </include>
+  </group>
+  <group unless="$(arg terrain_enabled)">
+    <include file="$(find go2_core)/launch/core.launch">
+      <arg name="enable_costmap_cloud" value="true"/>
+    </include>
+  </group>
+  <include file="$(find go2_localization)/launch/localization.launch">
+    <arg name="map_name" value="$(arg map_name)"/>
+    <arg name="map_root" value="$(arg map_root)"/>
+  </include>
+  <include file="$(find go2_navigation)/launch/navigation_stack.launch">
+    <arg name="map_name" value="$(arg map_name)"/>
+    <arg name="map_root" value="$(arg map_root)"/>
+    <arg name="terrain_enabled" value="$(arg terrain_enabled)"/>
+    <arg name="terrain_metadata" value="$(arg terrain_metadata)"/>
+    <arg name="terrain_sensor_height" value="$(arg terrain_sensor_height)"/>
+    <arg name="terrain_health_timeout_sec"
+         value="$(arg terrain_health_timeout_sec)"/>
+  </include>
+  <include file="$(find go2_control)/launch/control.launch">
+    <arg name="use_real_sdk" value="$(arg use_real_sdk)"/>
+    <arg name="network_interface" value="$(arg network_interface)"/>
+    <arg name="require_terrain_health" value="$(arg terrain_enabled)"/>
+    <arg name="terrain_health_timeout_sec"
+         value="$(arg terrain_health_timeout_sec)"/>
+  </include>
+
+  <node pkg="go2_bringup" type="go2_system_monitor_node"
+        name="go2_system_monitor" output="screen">
+    <param name="mode" value="navigation"/>
+    <param name="require_terrain_health" value="$(arg terrain_enabled)"/>
+    <param name="terrain_health_timeout_sec"
+           value="$(arg terrain_health_timeout_sec)"/>
+  </node>
+  <node if="$(arg rviz)" pkg="rviz" type="rviz" name="rviz" output="screen"/>
+</launch>

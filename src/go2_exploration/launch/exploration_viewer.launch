@@ -1,0 +1,10 @@
+<launch>
+  <arg name="session_dir"/>
+  <arg name="start_dashboard" default="true"/>
+  <node if="$(arg start_dashboard)" pkg="go2_exploration" type="exploration_dashboard.py" name="go2_exploration_dashboard" output="screen">
+    <param name="session_dir" value="$(arg session_dir)"/>
+  </node>
+  <node pkg="rviz" type="rviz" name="go2_exploration_rviz" args="-d $(find go2_exploration)/config/go2_exploration.rviz">
+    <env name="DISABLE_ROS1_EOL_WARNINGS" value="1"/>
+  </node>
+</launch>

@@ -1,0 +1,17 @@
+global_frame: map
+robot_base_frame: base_link
+update_frequency: 2.0
+publish_frequency: 1.0
+transform_tolerance: 0.30
+rolling_window: false
+plugins:
+  - {name: static_layer, type: "costmap_2d::StaticLayer"}
+  - {name: terrain_layer, type: "go2_terrain::Go2TerrainLayer"}
+  - {name: inflation_layer, type: "costmap_2d::InflationLayer"}
+static_layer:
+  map_topic: /map_2d
+  subscribe_to_updates: false
+inflation_layer:
+  # Keep the robot-1 navigation clearance unchanged in terrain mode.
+  inflation_radius: 0.10
+  cost_scaling_factor: 4.0

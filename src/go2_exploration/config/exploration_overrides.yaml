@@ -1,0 +1,55 @@
+# Exploration overrides on the preserved GO2 planner configuration.
+recovery_behavior_enabled: false
+base_local_planner: go2_exploration/TebLocalPlannerROS
+GlobalPlanner:
+  allow_unknown: false
+  use_dijkstra: false
+  use_quadratic: false
+  use_grid_path: true
+  default_tolerance: 0.0
+TebLocalPlannerROS:
+  max_vel_x: 0.30
+  max_vel_theta: 0.50
+  max_vel_x_backwards: 0.01
+  penalty_epsilon: 0.005
+  weight_kinematics_forward_drive: 10000.0
+  allow_init_with_backwards_motion: false
+global_costmap:
+  publish_frequency: 2.0
+  always_send_full_costmap: true
+  track_unknown_space: true
+  plugins:
+    - {name: static_layer, type: "costmap_2d::StaticLayer"}
+    - {name: inflation_layer, type: "costmap_2d::InflationLayer"}
+  static_layer:
+    map_topic: /nav_static_map
+    first_map_only: false
+    subscribe_to_updates: false
+    track_unknown_space: true
+  inflation_layer:
+    # GO2 half-width 0.155 + padding 0.03 + soft band 0.10.
+    inflation_radius: 0.285
+    cost_scaling_factor: 4.0
+local_costmap:
+  always_send_full_costmap: true
+  track_unknown_space: true
+  plugins:
+    - {name: obstacle_layer, type: "go2_exploration/ObservedObstacleLayer"}
+    - {name: inflation_layer, type: "costmap_2d::InflationLayer"}
+  obstacle_layer:
+    track_unknown_space: true
+    observation_map_topic: /exploration/observed_local_map
+    terrain_marking:
+      # The layer already retains obstacle cells until measured clearing.
+      # Reapplying old marking clouds after newer ground clearing resurrects
+      # transient false floor obstacles. Keep the verified GO2 live semantics.
+      observation_persistence: 0.0
+      expected_update_rate: 0.50
+    terrain_clearing:
+      # GO2 publishes one center per confirmed 15 cm ground cell. Expand the
+      # measured cell before the 5 cm ray tracer; never add predicted support.
+      topic: /exploration/clearing_points
+      expected_update_rate: 0.50
+  inflation_layer:
+    inflation_radius: 0.10
+    cost_scaling_factor: 4.0

@@ -1,0 +1,28 @@
+map_frame: map
+odom_frame: odom
+base_frame: base_link
+cloud_topic: /cloud_registered_base
+odom_topic: /odom_nav
+localization_topic: /localization/pose
+health_topic: /localization/ndt_ok
+tf_postdate_sec: 0.10
+
+ndt:
+  debug: false
+  num_threads: 4
+  maximum_iterations: 30
+  voxel_leaf_size: 0.15
+  transformation_epsilon: 0.01
+  step_size: 0.10
+  resolution: 1.00
+  thresh_shift: 0.25
+  thresh_rot: 0.0872665
+  min_scan_range: 0.30
+  max_scan_range: 50.0
+  max_fitness_score: 1.00
+  max_update_interval: 1.00
+  # Keep the last accepted map->odom through isolated rejected matches.
+  # Health becomes false only when no NDT match succeeds for this duration.
+  health_timeout: 3.00
+  max_correction_shift: 0.80
+  max_correction_rotation: 0.349066

@@ -1,0 +1,78 @@
+<launch>
+  <arg name="map_name" default="site01"/>
+  <arg name="map_root" default="$(env HOME)/go2_explore_ws/maps"/>
+  <arg name="map_yaml" default="$(arg map_root)/$(arg map_name)/map.yaml"/>
+  <!-- Old maps and direct roslaunch stay on the proven legacy path. The
+       launcher enables terrain only after validating terrain_metadata. -->
+  <arg name="terrain_enabled" default="false"/>
+  <arg name="terrain_metadata" default=""/>
+  <arg name="terrain_input_cloud" default="/cloud_registered_base"/>
+  <arg name="terrain_sensor_height" default="0.51"/>
+  <arg name="terrain_health_timeout_sec" default="0.75"/>
+
+  <param if="$(arg terrain_enabled)" name="/go2/terrain/map_mode"
+         value="terrain"/>
+  <param unless="$(arg terrain_enabled)" name="/go2/terrain/map_mode"
+         value="legacy"/>
+  <param if="$(arg terrain_enabled)" name="/go2/terrain/metadata_file"
+         value="$(arg terrain_metadata)"/>
+
+  <include if="$(arg terrain_enabled)"
+           file="$(find go2_terrain)/launch/runtime_terrain.launch">
+    <arg name="input_cloud" value="$(arg terrain_input_cloud)"/>
+    <arg name="sensor_height" value="$(arg terrain_sensor_height)"/>
+  </include>
+
+  <node pkg="map_server" type="map_server" name="go2_map_server"
+        args="$(arg map_yaml)" output="screen" required="true">
+    <remap from="map" to="/map_2d"/>
+    <remap from="map_metadata" to="/map_2d_metadata"/>
+  </node>
+
+  <node pkg="go2_navigation" type="go2_navigation_supervisor_node"
+        name="go2_navigation_supervisor" output="screen" required="true">
+    <param name="require_terrain_health" value="$(arg terrain_enabled)"/>
+    <param name="terrain_health_timeout_sec"
+           value="$(arg terrain_health_timeout_sec)"/>
+  </node>
+
+  <node pkg="move_base" type="move_base" name="move_base" output="screen"
+        required="true">
+    <rosparam command="load" file="$(find go2_navigation)/config/move_base.yaml"/>
+    <rosparam command="load" ns="global_costmap" file="$(find go2_navigation)/config/costmap_common.yaml"/>
+    <rosparam unless="$(arg terrain_enabled)" command="load"
+              ns="global_costmap"
+              file="$(find go2_navigation)/config/global_costmap.yaml"/>
+    <rosparam if="$(arg terrain_enabled)" command="load"
+              ns="global_costmap"
+              file="$(find go2_navigation)/config/global_costmap_terrain.yaml"/>
+    <rosparam if="$(arg terrain_enabled)" command="load"
+              ns="global_costmap"
+              file="$(find go2_terrain)/config/global_terrain_layer.yaml"/>
+    <param if="$(arg terrain_enabled)"
+           name="global_costmap/terrain_layer/metadata_file"
+           value="$(arg terrain_metadata)"/>
+    <rosparam command="load" ns="local_costmap" file="$(find go2_navigation)/config/costmap_common.yaml"/>
+    <rosparam unless="$(arg terrain_enabled)" command="load"
+              ns="local_costmap"
+              file="$(find go2_navigation)/config/local_costmap.yaml"/>
+    <rosparam if="$(arg terrain_enabled)" command="load"
+              ns="local_costmap"
+              file="$(find go2_navigation)/config/local_costmap_terrain.yaml"/>
+    <rosparam command="load" file="$(find go2_navigation)/config/global_planner.yaml"/>
+    <rosparam command="load" file="$(find go2_navigation)/config/teb.yaml"/>
+    <remap from="odom" to="/odom_nav"/>
+    <remap from="cmd_vel" to="/cmd_vel_nav"/>
+    <!-- The public simple-goal topic is consumed only by the supervisor, which
+         converts it to an internal action goal after all readiness checks. -->
+    <remap from="/move_base_simple/goal"
+           to="/move_base_internal/simple_goal_disabled"/>
+    <!-- The supervisor owns the public /move_base action API. Hiding all five
+         transport topics makes readiness validation a hard action boundary. -->
+    <remap from="/move_base/goal" to="/move_base_internal/goal"/>
+    <remap from="/move_base/cancel" to="/move_base_internal/cancel"/>
+    <remap from="/move_base/status" to="/move_base_internal/status"/>
+    <remap from="/move_base/feedback" to="/move_base_internal/feedback"/>
+    <remap from="/move_base/result" to="/move_base_internal/result"/>
+  </node>
+</launch>

@@ -1,0 +1,18 @@
+global_frame: map
+robot_base_frame: base_link
+update_frequency: 2.0
+publish_frequency: 1.0
+transform_tolerance: 0.30
+rolling_window: false
+plugins:
+  - {name: static_layer, type: "costmap_2d::StaticLayer"}
+  - {name: inflation_layer, type: "costmap_2d::InflationLayer"}
+static_layer:
+  map_topic: /map_2d
+  subscribe_to_updates: false
+inflation_layer:
+  # The exported occupancy map already includes 0.03 m obstacle inflation.
+  # Keep this gradient small enough for the 0.64 m passage without changing
+  # the measured robot footprint in costmap_common.yaml.
+  inflation_radius: 0.10
+  cost_scaling_factor: 4.0

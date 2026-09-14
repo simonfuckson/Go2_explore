@@ -1,0 +1,25 @@
+<launch>
+  <arg name="map_name" default="site01"/>
+  <arg name="map_root" default="$(env HOME)/go2_explore_ws/maps"/>
+  <arg name="map_dir" default="$(arg map_root)/$(arg map_name)"/>
+  <arg name="export_id" default=""/>
+  <arg name="input_pcd" default="$(arg map_dir)/public_map.pcd"/>
+  <arg name="trajectory_pcd" default="$(arg map_dir)/traversed_path_map.pcd"/>
+  <arg name="mapping_snapshot" default="$(arg map_dir)/mapping_snapshot.sha256"/>
+  <arg name="input_map_yaml" default="$(arg map_dir)/map.yaml"/>
+  <arg name="config" default="$(find go2_terrain)/config/terrain_export.yaml"/>
+
+  <node pkg="go2_terrain"
+        type="go2_terrain_exporter_node"
+        name="go2_terrain_exporter"
+        output="screen"
+        required="true">
+    <rosparam command="load" file="$(arg config)"/>
+    <param name="map_dir" value="$(arg map_dir)"/>
+    <param name="export_id" value="$(arg export_id)"/>
+    <param name="input_pcd" value="$(arg input_pcd)"/>
+    <param name="trajectory_pcd" value="$(arg trajectory_pcd)"/>
+    <param name="mapping_snapshot" value="$(arg mapping_snapshot)"/>
+    <param name="input_map_yaml" value="$(arg input_map_yaml)"/>
+  </node>
+</launch>

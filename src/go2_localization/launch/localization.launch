@@ -1,0 +1,22 @@
+<launch>
+  <arg name="map_name" default="site01"/>
+  <arg name="map_root" default="$(env HOME)/go2_explore_ws/maps"/>
+  <arg name="map_pcd" default="$(arg map_root)/$(arg map_name)/public_map.pcd"/>
+
+  <node pkg="go2_localization" type="go2_map_loader_node" name="go2_map_loader"
+        output="screen" required="true">
+    <param name="map_path" value="$(arg map_pcd)"/>
+    <param name="map_frame" value="map"/>
+    <param name="map_topic" value="/map_cloud"/>
+  </node>
+
+  <node pkg="go2_localization" type="go2_ndt_localizer_node" name="go2_ndt_localizer"
+        output="screen" required="true">
+    <rosparam command="load" file="$(find go2_localization)/config/localization.yaml"/>
+  </node>
+
+  <node pkg="go2_localization" type="go2_localization_guard_node"
+        name="go2_localization_guard" output="screen" required="true">
+    <rosparam command="load" file="$(find go2_localization)/config/guard.yaml"/>
+  </node>
+</launch>

@@ -1,0 +1,22 @@
+<launch>
+  <arg name="map_name" default="site01"/>
+  <arg name="map_root" default="$(env HOME)/go2_explore_ws/maps"/>
+  <arg name="start_lidar" default="true"/>
+  <arg name="rviz" default="false"/>
+
+  <group if="$(arg start_lidar)">
+    <include file="$(find livox_ros_driver2)/launch_ROS1/msg_MID360.launch"/>
+  </group>
+  <include file="$(find go2_bringup)/launch/fast_lio.launch"/>
+  <include file="$(find go2_core)/launch/core.launch"/>
+  <include file="$(find go2_mapping)/launch/map_builder.launch">
+    <arg name="map_name" value="$(arg map_name)"/>
+    <arg name="map_root" value="$(arg map_root)"/>
+  </include>
+
+  <node pkg="go2_bringup" type="go2_system_monitor_node"
+        name="go2_system_monitor" output="screen">
+    <param name="mode" value="mapping"/>
+  </node>
+  <node if="$(arg rviz)" pkg="rviz" type="rviz" name="rviz" output="screen"/>
+</launch>

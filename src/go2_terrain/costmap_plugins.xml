@@ -1,0 +1,10 @@
+<library path="lib/libgo2_terrain_layer">
+  <class name="go2_terrain::Go2TerrainLayer"
+         type="go2_terrain::Go2TerrainLayer"
+         base_class_type="costmap_2d::Layer">
+    <description>
+      Adds only saved global slope costs. Static occupancy and unknown cells
+      remain authoritative, and this plugin must not be loaded by a local costmap.
+    </description>
+  </class>
+</library>

@@ -1,0 +1,42 @@
+version: 2.0
+robot_id: go2_edu_02
+
+frames:
+  map: map
+  odom: odom
+  robot_init: robot_init
+  base_footprint: base_footprint
+  base_link: base_link
+  lidar_link: lidar_link
+  camera_link: camera_link
+
+lio_frames:
+  world: lio_odom
+  body: body_lio
+
+mid360_mount:
+  base_link_to_lidar_link:
+    x: 0.187
+    y: 0.0
+    z: 0.16
+    roll_deg: -0.1
+    pitch_deg: 39.0
+    yaw_deg: 0.0
+  nominal_mount_pitch_deg: 30.0
+  calibration_status: provisional_preserved_from_go2_mid360_nav
+
+d435i_mount:
+  base_link_to_camera_link:
+    x: 0.35
+    y: 0.0
+    z: 0.10
+    roll_deg: 0.0
+    pitch_deg: 0.0
+    yaw_deg: 0.0
+  use_for_localization: false
+  use_for_navigation: false
+
+startup_normalization:
+  sample_count: 30
+  require_stationary_at_startup: true
+  publish_lio_alignment_tf: true

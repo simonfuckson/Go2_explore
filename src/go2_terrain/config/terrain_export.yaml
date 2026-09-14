@@ -1,0 +1,68 @@
+# Revision 2: one surface drives PGM and all six terrain layers.
+# Geometry remains 0.05 m; robot extrinsics, navigation and chassis are unchanged.
+resolution: 0.05
+map_padding_m: 0.50
+base_height:
+  search_radius: 1.00
+  min: 0.20
+  max: 0.55
+  min_points: 20
+
+# PDF Route 1. These are map-independent settings, not per-site overrides.
+surface:
+  candidate_percentile: 0.05
+  seed_radius_m: 1.0
+  seed_height_tolerance_m: 0.12
+  trusted_seed_height_tolerance_m: 0.08
+  pmf_max_window_size: 101
+  pmf_slope: 0.40
+  pmf_initial_distance_m: 0.04
+  pmf_max_distance_m: 0.18
+  pmf_base: 2.0
+  pmf_exponential: true
+  validation_radius_m: 0.30
+  validation_min_candidates: 8
+  plane_inlier_tolerance_m: 0.05
+  plane_min_inlier_ratio: 0.55
+  plane_min_spread_m: 0.04
+  candidate_plane_tolerance_m: 0.05
+  plane_max_rmse_m: 0.035
+  max_ground_slope_deg: 35.0
+  connect_radius_m: 0.25
+  connection_plane_tolerance_m: 0.05
+  connection_max_normal_delta_deg: 20.0
+  max_ground_step_m: 0.015
+  surface_fit_radius_m: 0.80
+  surface_observation_radius_m: 0.15
+  surface_gap_fill_radius_m: 0.30
+  surface_min_candidates: 4
+  surface_min_component_cells: 100
+  surface_min_component_fraction: 0.03
+  min_connected_ground_cells: 100
+  wall_search_radius_m: 1.0
+  wall_max_nearest_m: 0.8
+  wall_min_inlier_ratio: 0.75
+  wall_min_ground_cells: 8
+
+obstacle:
+  min_height: 0.05
+  max_height: 1.50
+  min_points: 2
+occupancy:
+  trajectory_free_radius: 0.18
+  max_trajectory_gap: 0.50
+  ground_free_dilation: 0.10
+  obstacle_inflation_m: 0.03
+quality:
+  # Actual free and start-reachable trajectory samples, not merely known cells.
+  minimum_trajectory_ground_ratio: 0.80
+  minimum_trajectory_free_ratio: 0.95
+  minimum_trajectory_reachable_ratio: 0.95
+cost:
+  flat_slope_deg: 8.0
+  lethal_slope_deg: 30.0
+  minimum_cost: 15
+  maximum_soft_cost: 80
+  minimum_lethal_cluster_cells: 4
+  dilation_m: 0.20
+minimum_ground_cells: 100

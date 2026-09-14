@@ -1,0 +1,5 @@
+<library path="lib/libgo2_exploration_rviz">
+  <class name="go2_exploration/StatusPanel" type="go2_exploration::StatusPanel" base_class_type="rviz::Panel">
+    <description>Read-only GO2 exploration, perception and control status.</description>
+  </class>
+</library>

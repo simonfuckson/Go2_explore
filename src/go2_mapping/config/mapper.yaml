@@ -1,0 +1,75 @@
+input_cloud: /cloud_registered_odom
+# The full 6DoF pose determines the MID360 ray origin. The planar odometry is
+# retained separately so the terrain exporter receives the driven path.
+input_odom: /odom_nav
+pose_odom_topic: /odom_robot
+trajectory_odom_topic: /odom_nav
+static_scan_topic: /go2_mapping/static_scan
+static_map_topic: /go2_mapping/static_map_cloud
+dynamic_topic: /go2_mapping/dynamic_points
+
+min_range: 0.50
+max_range: 50.0
+scan_voxel_size: 0.05
+
+radius_filter:
+  enable: true
+  radius: 0.15
+  min_neighbors: 2
+
+self_filter:
+  enable: false
+  min_x: -0.55
+  max_x: 0.55
+  min_y: -0.45
+  max_y: 0.45
+  min_z: -0.40
+  max_z: 0.25
+
+dynamic_filter:
+  enable: true
+  # The 0.20 m parent rejects transient objects conservatively. Each 0.05 m
+  # child still needs independent evidence, but its shorter gate tolerates the
+  # normal 2-3 cm endpoint jitter of a moving MID360 scan.
+  voxel_size: 0.20
+  hit_probability: 0.65
+  miss_probability: 0.40
+  occupied_probability: 0.75
+  clearing_probability: 0.35
+  min_hit_scans: 12
+  min_observation_span: 2.0
+  min_hit_ratio: 0.60
+  fine_min_hit_scans: 6
+  fine_min_observation_span: 0.50
+  fine_min_hit_ratio: 0.50
+  min_candidate_clear_miss_scans: 4
+  min_candidate_clear_miss_span: 0.30
+  min_clear_miss_scans: 12
+  min_clear_miss_span: 1.20
+  ray_stride: 2
+  max_clearing_range: 20.0
+  ray_endpoint_margin: 0.25
+  candidate_timeout: 6.0
+  cleanup_period: 1.0
+  max_voxels: 2000000
+
+map:
+  voxel_size: 0.05
+  max_voxels: 5000000
+  # Unconfirmed fine evidence expires after 6 s and has its own hard budget,
+  # so transient people/feet cannot consume the 5M persistent-map allowance.
+  max_candidate_voxels: 500000
+  autosave_period: 30.0
+  status_period: 1.0
+  save_on_shutdown: true
+  trajectory_min_distance: 0.05
+  # Building a multi-million-point cloud in the sole ROS callback thread every
+  # two seconds is unsafe for production mapping. Enable only for validation.
+  publish_full_map: false
+
+map_publish_period: 2.0
+publish_dynamic_points: false
+max_odom_age: 0.20
+odom_cache_duration: 2.0
+odom_cache_max_messages: 400
+cloud_queue_max_messages: 10

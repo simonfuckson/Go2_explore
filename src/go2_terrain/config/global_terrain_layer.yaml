@@ -1,0 +1,5 @@
+# Load this namespace only under global_costmap. The plugin rejects rolling
+# costmaps and any global frame other than map.
+terrain_layer:
+  enabled: true
+  metadata_file: ""

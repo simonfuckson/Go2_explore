@@ -1,0 +1,85 @@
+<launch>
+  <arg name="map_name" default="current_exploration"/>
+  <arg name="map_root" default="$(env HOME)/go2_explore_ws/maps"/>
+  <arg name="session_dir" default="$(env HOME)/go2_explore_ws/logs/direct_launch"/>
+  <arg name="auto_start" default="true"/>
+  <arg name="auto_reenable" default="true"/>
+  <arg name="use_real_sdk" default="false"/>
+  <arg name="network_interface" default="eth0"/>
+  <arg name="start_sensors" default="true"/>
+  <arg name="rviz" default="true"/>
+  <arg name="camera" default="true"/>
+  <arg name="lidar_blind" default="0.70"/>
+  <arg name="completion_hold_time" default="30.0"/>
+  <param name="/exploration/runtime_mode" value="$(eval 'simulation' if not arg('start_sensors') else 'real' if arg('use_real_sdk') else 'observe')"/>
+
+  <group if="$(arg start_sensors)">
+    <include if="$(arg camera)" file="$(find go2_exploration)/launch/include/camera.launch.xml"/>
+    <include file="$(find livox_ros_driver2)/launch_ROS1/msg_MID360.launch"/>
+    <node pkg="go2_exploration" type="go2_exploration_sensor_guard" name="go2_exploration_sensor_guard" required="true" output="screen">
+      <rosparam command="load" ns="self_filter" file="$(find go2_exploration)/config/camera_self_filter.yaml"/>
+    </node>
+    <group>
+      <remap from="/livox/lidar" to="/exploration/livox/lidar_validated"/>
+      <remap from="/livox/imu" to="/exploration/livox/imu_validated"/>
+      <include file="$(find go2_bringup)/launch/fast_lio.launch"/>
+    </group>
+    <!-- Preserve all valid measured returns for sparse MID360 floor support.
+         Estimator source, extrinsics and mapping voxel filters stay upstream. -->
+    <param name="/point_filter_num" value="1"/>
+    <param name="/preprocess/blind" value="$(arg lidar_blind)"/>
+    <include file="$(find go2_core)/launch/core.launch"/>
+    <include file="$(find go2_mapping)/launch/map_builder.launch">
+      <arg name="map_name" value="$(arg map_name)"/>
+      <arg name="map_root" value="$(arg map_root)"/>
+    </include>
+    <include file="$(find go2_terrain)/launch/runtime_terrain.launch"/>
+    <!-- GO2 normally disables safe_ground together with debug clouds.
+         Exploration requires that measured support grid for coverage memory. -->
+    <param name="/go2_terrain_guard/output/publish_debug_clouds" value="true"/>
+  </group>
+  <node pkg="tf2_ros" type="static_transform_publisher" name="go2_exploration_map_frame"
+        args="0 0 0 0 0 0 map odom"/>
+  <node pkg="go2_exploration" type="odom_health.py" name="go2_exploration_odom_health" required="true" output="screen">
+    <param name="require_sensor_health" value="$(arg start_sensors)"/>
+  </node>
+  <node pkg="go2_exploration" type="ground_clearing_adapter.py" name="go2_exploration_ground_clearing" required="true" output="screen"/>
+  <include file="$(find go2_exploration)/launch/include/navigation.launch.xml"/>
+  <group if="$(arg start_sensors)">
+    <param name="/move_base/local_costmap/obstacle_layer/terrain_clearing/topic" value="/exploration/self_filter/clearing_points"/>
+  </group>
+  <include file="$(find go2_exploration)/launch/include/control.launch.xml">
+    <arg name="use_real_sdk" value="$(arg use_real_sdk)"/>
+    <arg name="network_interface" value="$(arg network_interface)"/>
+    <arg name="require_terrain_health" value="true"/>
+  </include>
+  <include file="$(find go2_exploration_safety)/launch/include/cmd_vel_safety.launch.xml">
+    <arg name="allow_stationary_command_wait" value="true"/>
+    <arg name="recover_obstacle_stop" value="true"/>
+  </include>
+  <node pkg="go2_exploration" type="observed_map_memory.py" name="go2_observed_map_memory" required="true" output="screen">
+    <remap from="/terrain/ground_points" to="$(eval '/exploration/self_filter/ground_points' if arg('start_sensors') else '/terrain/ground_points')"/>
+  </node>
+  <node pkg="go2_exploration" type="frontier_costmap_adapter.py" name="go2_frontier_costmap_adapter" required="true" output="screen">
+    <param name="min_frontier_cells" value="5"/>
+    <param name="coverage_gap_min_area" value="0.15"/>
+  </node>
+  <rosparam command="load" ns="explore" file="$(find go2_exploration)/config/frontier.yaml"/>
+  <node unless="$(arg auto_start)" pkg="go2_explore_lite" type="go2_explore" name="explore" output="screen" required="true">
+    <param name="preview_only" value="true"/>
+  </node>
+  <node pkg="go2_exploration" type="explore_supervisor.py" name="go2_explore_supervisor" required="true" output="screen">
+    <param name="auto_start" value="$(arg auto_start)"/>
+    <param name="auto_reenable" value="$(arg auto_reenable)"/>
+    <param name="use_real_sdk" value="$(arg use_real_sdk)"/>
+    <param name="map_name" value="$(arg map_name)"/>
+    <param name="session_dir" value="$(arg session_dir)"/>
+    <param name="completion_hold_time" value="$(arg completion_hold_time)"/>
+  </node>
+  <node pkg="go2_exploration" type="exploration_dashboard.py" name="go2_exploration_dashboard" output="screen">
+    <param name="session_dir" value="$(arg session_dir)"/>
+  </node>
+  <node if="$(arg rviz)" pkg="rviz" type="rviz" name="go2_exploration_rviz" args="-d $(find go2_exploration)/config/go2_exploration.rviz">
+    <env name="DISABLE_ROS1_EOL_WARNINGS" value="1"/>
+  </node>
+</launch>

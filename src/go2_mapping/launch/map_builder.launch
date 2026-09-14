@@ -1,0 +1,23 @@
+<launch>
+  <arg name="map_name" default="site01"/>
+  <arg name="map_root" default="$(env HOME)/go2_explore_ws/maps"/>
+  <arg name="output_path" default="$(arg map_root)/$(arg map_name)/public_map.pcd"/>
+  <arg name="trajectory_output_path"
+       default="$(arg map_root)/$(arg map_name)/traversed_path_map.pcd"/>
+  <arg name="publish_dynamic_points" default="false"/>
+  <arg name="publish_full_map" default="false"/>
+
+  <node pkg="go2_mapping" type="go2_map_builder_node" name="go2_map_builder"
+        output="screen" required="true">
+    <rosparam command="load" file="$(find go2_mapping)/config/mapper.yaml"/>
+    <param name="input_cloud" value="/cloud_registered_odom"/>
+    <!-- Keep input_odom as a compatibility alias for older deployments. -->
+    <param name="input_odom" value="/odom_nav"/>
+    <param name="pose_odom_topic" value="/odom_robot"/>
+    <param name="trajectory_odom_topic" value="/odom_nav"/>
+    <param name="output_path" value="$(arg output_path)"/>
+    <param name="trajectory_output_path" value="$(arg trajectory_output_path)"/>
+    <param name="publish_dynamic_points" value="$(arg publish_dynamic_points)"/>
+    <param name="map/publish_full_map" value="$(arg publish_full_map)"/>
+  </node>
+</launch>

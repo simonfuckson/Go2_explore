@@ -1,0 +1,10 @@
+# Coordinates are metres in base_link. Populate from the final measured mount.
+# Preview and enabled modes use exactly the same boxes and ray tests.
+enabled: false
+calibration_id: ""
+max_removed_fraction: 0.10
+reference_lidar_mount: [0.187, 0.0, 0.16, -0.1, 39.0, 0.0]
+boxes: []
+# Each box: name, center: [x,y,z], size: [length,width,height],
+# rpy_deg: [roll,pitch,yaw], padding: 0.005 (at most 0.03).
+# No unmeasured camera-sized or scene-sized box is enabled by default.

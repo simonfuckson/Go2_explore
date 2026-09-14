@@ -1,0 +1,27 @@
+max_vx: 0.60
+min_sustained_walk_vx: 0.30
+# TEB may require a short reverse arc. Keep it slower than forward walking.
+max_reverse_vx: 0.18
+min_sustained_reverse_vx: 0.12
+max_wz: 0.80
+min_in_place_wz: 0.50
+max_ax: 0.60
+max_awz: 0.80
+timeout_sec: 0.50
+deadband_vx: 0.015
+deadband_wz: 0.01
+yaw_reverse_hold_sec: 0.20
+# Prevent TEB's rapid +/- yaw changes from making the feet scrub in place.
+pure_turn_direction_lock_sec: 3.0
+# Ignore isolated zero pulses from TEB before releasing the locked turn sign.
+pure_turn_zero_release_sec: 0.35
+# Keep pure-yaw output out of the low-rate body-twist region while preserving
+# the existing 0.50 rad/s turn rate and 0.80 rad/s maximum.
+enforce_pure_turn_output_floor: true
+allow_reverse: true
+rate_hz: 20.0
+# Enabled only by terrain navigation launch. This is independent of
+# /navigation/ready so control enable cannot create a readiness cycle.
+require_terrain_health: false
+terrain_health_topic: /terrain/healthy
+terrain_health_timeout_sec: 0.75

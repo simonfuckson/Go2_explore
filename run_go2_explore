@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -eo pipefail
+WS_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+if [[ "${GO2_EXPLORE_CLEAN_RUN:-}" != 1 ]]; then
+  exec env -u CMAKE_PREFIX_PATH -u ROS_PACKAGE_PATH -u PYTHONPATH -u LD_LIBRARY_PATH \
+    -u ROS_ROOT -u ROS_ETC_DIR -u ROS_DISTRO -u ROS_VERSION \
+    GO2_EXPLORE_CLEAN_RUN=1 /bin/bash --noprofile --norc "$0" "$@"
+fi
+explore_cli_args=("$@")
+set --
+source /opt/ros/noetic/setup.bash
+test -f "${WS_ROOT}/devel/setup.bash" || { echo "Run ${WS_ROOT}/build_workspace.sh first" >&2; exit 2; }
+source "${WS_ROOT}/devel/setup.bash"
+export ROS_MASTER_URI="http://127.0.0.1:${GO2_EXPLORE_PORT:-11321}"
+export ROS_IP="${GO2_EXPLORE_IP:-192.168.50.110}"
+unset ROS_HOSTNAME
+export ROS_HOME="${WS_ROOT}/.ros"
+export ROS_LOG_DIR="${WS_ROOT}/logs/ros"
+export GO2_WS_ROOT="${WS_ROOT}"
+exec /usr/bin/python3 "${WS_ROOT}/scripts/session.py" "${explore_cli_args[@]}"

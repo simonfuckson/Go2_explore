@@ -1,0 +1,27 @@
+robot:
+  name: go2
+  model: go2_edu
+  holonomic: false
+  footprint:
+    length: 0.70
+    width: 0.31
+    vertices:
+      - [0.35, 0.155]
+      - [0.35, -0.155]
+      - [-0.35, -0.155]
+      - [-0.35, 0.155]
+
+motion_limits:
+  max_vx: 0.60
+  max_vy: 0.00
+  max_wz: 0.80
+  max_ax: 0.60
+  max_awz: 0.80
+  command_timeout_sec: 0.50
+
+network:
+  livox_interface: eth1
+  livox_host_ip: 192.168.1.50
+  livox_device_ip: 192.168.1.191
+  go2_interface: eth0
+  go2_host_ip: 192.168.123.99

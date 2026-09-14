@@ -1,0 +1,20 @@
+<launch>
+  <!-- Video only: no camera pose is invented and its IMU never enters FAST-LIO. -->
+  <include file="$(find realsense2_camera)/launch/rs_camera.launch">
+    <arg name="camera" value="exploration_camera"/>
+    <arg name="device_type" value="d435i"/>
+    <arg name="enable_color" value="true"/>
+    <arg name="color_width" value="640"/>
+    <arg name="color_height" value="480"/>
+    <arg name="color_fps" value="15"/>
+    <arg name="enable_depth" value="false"/>
+    <arg name="enable_confidence" value="false"/>
+    <arg name="enable_infra1" value="false"/>
+    <arg name="enable_infra2" value="false"/>
+    <arg name="enable_gyro" value="false"/>
+    <arg name="enable_accel" value="false"/>
+    <arg name="publish_tf" value="false"/>
+    <arg name="publish_odom_tf" value="false"/>
+    <arg name="wait_for_device_timeout" value="10"/>
+  </include>
+</launch>

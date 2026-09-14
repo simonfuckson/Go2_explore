@@ -1,0 +1,38 @@
+<launch>
+  <arg name="extrinsics" default="$(find go2_core)/config/extrinsics.yaml"/>
+  <arg name="initialization_samples" default="30"/>
+  <arg name="enable_costmap_cloud" default="false"/>
+
+  <rosparam command="load" file="$(arg extrinsics)"/>
+
+  <node pkg="go2_core" type="tf_manager.py" name="go2_tf_manager" output="screen"/>
+
+  <node pkg="go2_core" type="go2_pose_adapter_node" name="go2_pose_adapter" output="screen" required="true">
+    <param name="input_odom_topic" value="/lio/odometry"/>
+    <param name="output_robot_odom_topic" value="/odom_robot"/>
+    <param name="output_nav_odom_topic" value="/odom_nav"/>
+    <param name="initialization_samples" value="$(arg initialization_samples)"/>
+    <param name="velocity_alpha" value="0.45"/>
+  </node>
+
+  <node pkg="go2_core" type="go2_cloud_adapter_node" name="cloud_to_base" output="screen">
+    <param name="input_topic" value="/lio/cloud_registered_body"/>
+    <param name="output_topic" value="/cloud_registered_base"/>
+    <param name="target_frame" value="base_link"/>
+  </node>
+
+  <!-- Keep localization on the full cloud; only the local costmap is filtered. -->
+  <node if="$(arg enable_costmap_cloud)" pkg="go2_core" type="go2_cloud_adapter_node" name="cloud_for_costmap" output="screen">
+    <param name="input_topic" value="/cloud_registered_base"/>
+    <param name="output_topic" value="/cloud_registered_costmap"/>
+    <param name="target_frame" value="base_link"/>
+    <param name="voxel_leaf_size" value="0.10"/>
+    <param name="max_publish_rate_hz" value="8.0"/>
+  </node>
+
+  <node pkg="go2_core" type="go2_cloud_adapter_node" name="cloud_world_to_odom" output="screen">
+    <param name="input_topic" value="/lio/cloud_registered"/>
+    <param name="output_topic" value="/cloud_registered_odom"/>
+    <param name="target_frame" value="odom"/>
+  </node>
+</launch>

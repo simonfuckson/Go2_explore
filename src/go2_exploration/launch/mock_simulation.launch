@@ -1,0 +1,23 @@
+<launch>
+  <arg name="map_name" default="simulation"/>
+  <arg name="auto_reenable" default="true"/>
+  <arg name="map_root" default="$(env HOME)/go2_explore_ws/artifacts/simulation_maps"/>
+  <arg name="session_dir" default="$(env HOME)/go2_explore_ws/artifacts/simulation_session"/>
+  <rosparam command="load" file="$(find go2_core)/config/extrinsics.yaml"/>
+  <rosparam command="load" ns="go2_terrain_guard" file="$(find go2_terrain)/config/terrain_guard_go2.yaml"/>
+  <param name="/go2_terrain_guard/sensor_height" value="0.51"/>
+  <node pkg="go2_exploration" type="synthetic_world.py" name="synthetic_world" output="screen" required="true"/>
+  <include file="$(find go2_mapping)/launch/map_builder.launch">
+    <arg name="map_name" value="$(arg map_name)"/>
+    <arg name="map_root" value="$(arg map_root)"/>
+  </include>
+  <include file="$(find go2_exploration)/launch/go2_exploration.launch">
+    <arg name="start_sensors" value="false"/>
+    <arg name="rviz" value="false"/>
+    <arg name="use_real_sdk" value="false"/>
+    <arg name="auto_reenable" value="$(arg auto_reenable)"/>
+    <arg name="map_name" value="$(arg map_name)"/>
+    <arg name="map_root" value="$(arg map_root)"/>
+    <arg name="session_dir" value="$(arg session_dir)"/>
+  </include>
+</launch>

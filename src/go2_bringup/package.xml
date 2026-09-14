@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>go2_bringup</name>
+  <version>1.0.0</version>
+  <description>Canonical one-command GO2 mapping and navigation bringup.</description>
+  <maintainer email="nvidia@example.com">nvidia</maintainer>
+  <license>BSD-3-Clause</license>
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>livox_ros_driver2</depend>
+  <depend>nav_msgs</depend>
+  <depend>roscpp</depend>
+  <depend>sensor_msgs</depend>
+  <depend>std_msgs</depend>
+  <exec_depend>fast_lio</exec_depend>
+  <exec_depend>go2_control</exec_depend>
+  <exec_depend>go2_core</exec_depend>
+  <exec_depend>go2_localization</exec_depend>
+  <exec_depend>go2_mapping</exec_depend>
+  <exec_depend>go2_navigation</exec_depend>
+  <exec_depend>go2_terrain</exec_depend>
+  <exec_depend>rviz</exec_depend>
+  <export/>
+</package>

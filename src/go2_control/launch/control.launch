@@ -1,0 +1,59 @@
+<launch>
+  <arg name="use_real_sdk" default="false"/>
+  <arg name="network_interface" default="eth0"/>
+  <arg name="require_terrain_health" default="false"/>
+  <arg name="terrain_health_timeout_sec" default="0.75"/>
+
+  <node pkg="go2_control" type="go2_velocity_shaper_node"
+        name="go2_velocity_shaper" output="screen" required="true">
+    <rosparam command="load" file="$(find go2_control)/config/control.yaml"/>
+    <param name="require_terrain_health"
+           value="$(arg require_terrain_health)"/>
+    <param name="terrain_health_timeout_sec"
+           value="$(arg terrain_health_timeout_sec)"/>
+  </node>
+
+  <group if="$(arg use_real_sdk)">
+    <node pkg="go2_control" type="go2_sdk_bridge_real_node"
+          name="go2_sdk_bridge_real" output="screen" required="true">
+      <param name="command_topic" value="/cmd_vel_safe"/>
+      <param name="localization_ok_topic" value="/localization/ok"/>
+      <param name="network_interface" value="$(arg network_interface)"/>
+      <param name="command_timeout_sec" value="0.50"/>
+      <param name="max_vx" value="0.60"/>
+      <param name="max_vy" value="0.00"/>
+      <param name="max_wz" value="0.80"/>
+      <!-- The velocity shaper applies a smooth 0.30 m/s sustained-walk floor. -->
+      <param name="min_walk_vx" value="0.00"/>
+      <param name="min_turn_wz" value="0.04"/>
+      <param name="stop_deadband_vx" value="0.025"/>
+      <param name="stop_deadband_wz" value="0.01"/>
+      <!-- Unitree's official GO2 SportClient example refreshes Move at 200 Hz. -->
+      <param name="control_rate_hz" value="200.0"/>
+      <!-- Enable explicitly requests ClassicWalk(true), while Move remains at 200 Hz. -->
+      <param name="gait_mode" value="classic_mcf"/>
+      <param name="allow_motion_mode_switch" value="false"/>
+      <param name="motion_mode_selector" value=""/>
+      <param name="required_motion_mode" value="mcf"/>
+      <param name="motion_mode_settle_sec" value="5.0"/>
+      <!-- Allow short goals to settle before the hard no-step safety interlock. -->
+      <param name="motion_response_timeout_sec" value="6.0"/>
+      <!-- Zero pulses shorter than this do not reset the no-step watchdog. -->
+      <param name="motion_episode_reset_gap_sec" value="1.0"/>
+      <param name="min_joint_motion_dq" value="0.15"/>
+      <param name="min_yaw_response_wz" value="0.05"/>
+      <param name="foot_unload_force_threshold" value="5"/>
+      <!-- Pure yaw alone can be body twist; require evidence that a foot unloads. -->
+      <param name="require_foot_unload_for_pure_turn" value="true"/>
+      <param name="telemetry_rate_hz" value="50.0"/>
+      <param name="battery_rate_hz" value="5.0"/>
+      <param name="min_enable_battery_percent" value="25"/>
+      <param name="base_frame" value="base_link"/>
+    </node>
+  </group>
+
+  <group unless="$(arg use_real_sdk)">
+    <node pkg="go2_control" type="go2_sdk_bridge_mock_node"
+          name="go2_sdk_bridge_mock" output="screen" required="true"/>
+  </group>
+</launch>
