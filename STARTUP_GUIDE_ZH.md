@@ -1,5 +1,7 @@
 # GO2 在线自主探索启动手册
 
+**选点效率更新：**启动命令不变，RViz 增加“探索效率 / 等待原因”，显示路径长度、预计观测收益、等待时间和阻塞坐标。保留 0.30 m/s、0.50 rad/s 上限；五级台阶的自主通行尚未适配。详见 [EFFICIENCY_CHANGES_ZH.md](EFFICIENCY_CHANGES_ZH.md)。
+
 **当前默认：平地探索模式。**地面几何评分不再导致停车；仍检查避障点云、地图、TF 和指令是否有效。RViz 的“避障感知”显示准入状态，“地面支撑（仅显示）”不参与停车判定。启动命令不变，需要对照旧版时添加 `--terrain-geometry-checks`。本轮变更与验证见 [FLAT_GROUND_CHANGES_ZH.md](FLAT_GROUND_CHANGES_ZH.md)；下文历史验收中“拟合高度、地形支撑必须通过”的要求仅适用于启用几何检查的模式。
 
 适用机器：`192.168.50.110`，用户 `nvidia`。工作空间：`/home/nvidia/go2_explore_ws`。更新日期：2026-09-14。

@@ -110,9 +110,18 @@ private:
 
   std::vector<geometry_msgs::Point> frontier_blacklist_;
   std::vector<ros::Time> blacklist_until_;
-  struct RetryEntry { ros::Time until; double blocked_x, blocked_y; unsigned char blocked_cost; };
+  struct RetryEntry {
+    ros::Time until;
+    double blocked_x, blocked_y;
+    unsigned char blocked_cost;
+    bool local;
+    double robot_x,robot_y,robot_yaw;
+    std::string reason;
+  };
   std::map<std::pair<int,int>,RetryEntry> retries_;
+  std::map<std::pair<int,int>,size_t> candidate_cursors_;
   size_t frontier_cursor_=0;
+  ros::WallTime waiting_since_;
   geometry_msgs::Point prev_goal_;
   double prev_distance_;
   ros::Time last_progress_;
@@ -132,6 +141,8 @@ private:
   double front_=0, rear_=0, half_width_=0, stop_front_=0;
   double retry_seconds_=15.0, blacklist_seconds_=30.0;
   int plan_budget_=12;
+  double cycle_budget_ms_=75., scoring_speed_=.30, scoring_yaw_speed_=.50;
+  double goal_overhead_seconds_=2.;
 };
 }
 

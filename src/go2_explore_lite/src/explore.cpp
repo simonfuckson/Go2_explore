@@ -42,11 +42,13 @@
 #include <explore/anchored_path.h>
 #include <explore/view_gain.h>
 #include <explore/arrival_view.h>
+#include <explore/candidate_search.h>
 #include <nav_msgs/GetPlan.h>
 #include <std_msgs/String.h>
 #include <sstream>
 #include <limits>
 #include <set>
+#include <iomanip>
 
 #include <thread>
 
@@ -139,6 +141,15 @@ Explore::Explore()
   }
   private_nh_.param("plan_checks_per_cycle",plan_budget_,12);
   plan_budget_=std::max(1,std::min(24,plan_budget_));
+  private_nh_.param("selection_budget_ms",cycle_budget_ms_,75.);
+  private_nh_.param("goal_overhead_seconds",goal_overhead_seconds_,2.);
+  relative_nh_.param("/go2_exploration_safety/max_linear_speed",scoring_speed_,.30);
+  relative_nh_.param("/go2_exploration_safety/max_angular_speed",scoring_yaw_speed_,.50);
+  if(!std::isfinite(cycle_budget_ms_)||cycle_budget_ms_<5.||cycle_budget_ms_>250.||
+     !std::isfinite(goal_overhead_seconds_)||goal_overhead_seconds_<=0.||
+     !std::isfinite(scoring_speed_)||scoring_speed_<=0.||
+     !std::isfinite(scoring_yaw_speed_)||scoring_yaw_speed_<=0.)
+    throw std::runtime_error("Invalid exploration selection budget/scoring parameters");
   make_plan_client_ = relative_nh_.serviceClient<nav_msgs::GetPlan>("/move_base/make_plan");
 
   search_ = frontier_exploration::FrontierSearch(costmap_client_.getCostmap(),
@@ -282,6 +293,9 @@ void Explore::makePlan()
   if (frontiers.empty()) {
     // Map refresh can temporarily remove frontiers. Keep the timer alive;
     // the session supervisor owns the multi-map completion decision.
+    waiting_since_=ros::WallTime();
+    std_msgs::String status;status.data="WAITING reason=no_frontier_tasks frontiers=0 checked=0";
+    selection_status_publisher_.publish(status);
     return;
   }
 
@@ -324,6 +338,7 @@ bool Explore::selectBoundaryGoal(
     const std::vector<frontier_exploration::Frontier>& frontiers,
     const geometry_msgs::Pose& pose, geometry_msgs::Point& target)
 {
+  const auto cycle_start=ros::WallTime::now();
   const double resolution = costmap_client_.getCostmap()->getResolution();
   auto* geometry = geometry_client_.getCostmap();
   auto* local_map = local_client_.getCostmap();
@@ -336,15 +351,19 @@ bool Explore::selectBoundaryGoal(
   } catch (const tf::TransformException&) { return false; }
   if (frontiers.empty()) return false;
   const auto now=ros::Time::now();
+  const double robot_yaw=tf::getYaw(pose.orientation);
   for (auto it=retries_.begin();it!=retries_.end();) {
     unsigned mx,my;
     const auto& entry=it->second;
-    const bool changed=geometry->worldToMap(entry.blocked_x,entry.blocked_y,mx,my)
-        && geometry->getCost(mx,my)!=entry.blocked_cost;
-    if (entry.until<=now || changed) it=retries_.erase(it); else ++it;
+    auto* map=entry.local?local_map:geometry;
+    const bool changed=map->worldToMap(entry.blocked_x,entry.blocked_y,mx,my)
+        && map->getCost(mx,my)!=entry.blocked_cost;
+    if (entry.until<=now || changed || retryPoseChanged(pose.position.x,pose.position.y,robot_yaw,
+          entry.robot_x,entry.robot_y,entry.robot_yaw)) it=retries_.erase(it); else ++it;
   }
   std::vector<std::vector<geometry_msgs::Point>> queues;
-  const double robot_yaw=tf::getYaw(pose.orientation);
+  std::vector<CandidateKey> queue_keys;
+  std::set<CandidateKey> active_keys;
   for (const auto& frontier:frontiers) {
     auto candidates=boundaryCandidates(knownApproaches(*geometry,frontier.points),
         frontier.centroid,pose.position,robot_yaw,minimum_goal_distance_);
@@ -364,31 +383,43 @@ bool Explore::selectBoundaryGoal(
       }
       candidates.insert(candidates.begin(),approaches.begin(),approaches.end());
     }
-    std::set<std::pair<int,int>> coarse;
-    std::vector<geometry_msgs::Point> distinct;
-    for (const auto& p:candidates)
-      if (coarse.emplace(std::floor(p.x/.20),std::floor(p.y/.20)).second) distinct.push_back(p);
-    queues.push_back(std::move(distinct));
+    queues.push_back(diverseCandidates(candidates,resolution));
+    const auto key=candidateKey(frontier.initial.x,frontier.initial.y,resolution);
+    queue_keys.push_back(key);active_keys.insert(key);
   }
-  std::vector<size_t> positions(queues.size(),0);
+  for(auto it=candidate_cursors_.begin();it!=candidate_cursors_.end();)
+    if(!active_keys.count(it->first))it=candidate_cursors_.erase(it);else ++it;
+  std::vector<CandidateCursor> positions;
+  size_t candidate_count=0;
+  for(size_t i=0;i<queues.size();++i) {
+    positions.emplace_back(candidate_cursors_[queue_keys[i]],queues[i].size());
+    candidate_count+=queues[i].size();
+  }
   std::map<std::string,int> rejected;
   int calls=0, examined=0;
   bool found=false;
   double best_score=std::numeric_limits<double>::infinity();
+  double selected_gain=0,selected_length=0,selected_turn=0;
+  geometry_msgs::Point last_blocked;
+  std::string blocked_frame,last_failure;
+  unsigned char last_blocked_cost=0;
+  double blocked_distance=0.;
   visualization_msgs::MarkerArray views;
   visualization_msgs::Marker clear;
   clear.action=visualization_msgs::Marker::DELETEALL; views.markers.push_back(clear);
   size_t cursor=frontier_cursor_%queues.size();
   int exhausted=0;
   while (calls<plan_budget_ && examined<240 && exhausted<static_cast<int>(queues.size())) {
+      if(examined>0 && (ros::WallTime::now()-cycle_start).toSec()*1000.>=cycle_budget_ms_)break;
       const size_t index=cursor;
       cursor=(cursor+1)%queues.size();
-      if (positions[index]>=queues[index].size()) {++exhausted;continue;}
+      if (positions[index].empty()) {++exhausted;continue;}
       exhausted=0; ++examined;
-      const auto candidate=queues[index][positions[index]++];
-      const std::pair<int,int> key{static_cast<int>(std::floor(candidate.x/.20)),
-                                   static_cast<int>(std::floor(candidate.y/.20))};
-      if (goalOnBlacklist(candidate) || retries_.count(key)) {++rejected["cooldown"];continue;}
+      const auto candidate=queues[index][positions[index].pop()];
+      const auto key=candidateKey(candidate.x,candidate.y,resolution);
+      if (goalOnBlacklist(candidate)) {++rejected["failed_goal_cooldown"];continue;}
+      const auto cached=retries_.find(key);
+      if(cached!=retries_.end()) {++rejected["cached_"+cached->second.reason];continue;}
       const double toward=std::atan2(frontiers[index].centroid.y-candidate.y,
                                      frontiers[index].centroid.x-candidate.x);
       const double approach=std::atan2(candidate.y-pose.position.y,candidate.x-pose.position.x);
@@ -403,8 +434,13 @@ bool Explore::selectBoundaryGoal(
         if (value>gain) {gain=value;view_yaw=heading;}
       }
       if (gain<.01) {
-        ++rejected[gain<0?"goal_footprint":"no_view_gain"];
-        retries_[key]={now+ros::Duration(retry_seconds_),preblocked.x,preblocked.y,preblocked_cost};
+        const std::string reason=gain<0?"goal_footprint":"no_view_gain";
+        ++rejected[reason];
+        // Visibility changes as the coverage map updates, without a change
+        // at the candidate's collision cell. Revisit these views promptly.
+        const double delay=gain<0?retry_seconds_:std::min(2.,retry_seconds_);
+        retries_[key]={now+ros::Duration(delay),preblocked.x,preblocked.y,preblocked_cost,false,
+                      pose.position.x,pose.position.y,robot_yaw,reason};
         continue;
       }
       ++calls;
@@ -418,11 +454,17 @@ bool Explore::selectBoundaryGoal(
       request.request.tolerance = 0.0;
       geometry_msgs::Point blocked=candidate;
       unsigned char blocked_cost=costmap_2d::FREE_SPACE;
+      bool blocked_local=false;
+      double path_blocked_distance=0.;
       unsigned mx,my;
       if (geometry->worldToMap(candidate.x,candidate.y,mx,my)) blocked_cost=geometry->getCost(mx,my);
       auto defer=[&](const std::string& reason) {
         ++rejected[reason];
-        retries_[key]={now+ros::Duration(retry_seconds_),blocked.x,blocked.y,blocked_cost};
+        retries_[key]={now+ros::Duration(retry_seconds_),blocked.x,blocked.y,blocked_cost,blocked_local,
+                      pose.position.x,pose.position.y,robot_yaw,reason};
+        last_failure=reason;last_blocked=blocked;last_blocked_cost=blocked_cost;
+        blocked_frame=blocked_local?local_client_.getGlobalFrameID():geometry_client_.getGlobalFrameID();
+        blocked_distance=path_blocked_distance;
       };
       if (!make_plan_client_.call(request) || request.response.plan.poses.empty()) {defer("no_global_plan");continue;}
       const auto& end = request.response.plan.poses.back().pose.position;
@@ -432,18 +474,20 @@ bool Explore::selectBoundaryGoal(
       const auto path = anchoredPath(request.response.plan.poses,pose,resolution);
       if (path.empty()) {defer("invalid_global_plan");continue;}
       std::string failure="global_footprint";
-      double final_heading=robot_yaw, length=0;
+      double final_heading=robot_yaw, length=0,turn=0;
       for (size_t i=0; i<path.size(); ++i) {
         const auto& p=path[i];
         const auto& next=path[std::min(i+1,path.size()-1)];
         final_heading=p.yaw;
         length+=std::hypot(next.x-p.x,next.y-p.y);
+        turn+=std::abs(angleDifference(next.yaw,p.yaw));
+        path_blocked_distance=std::hypot(p.x-pose.position.x,p.y-pose.position.y);
         if (!knownFootprint(*geometry,p.x,p.y,final_heading,front_,rear_,half_width_,&blocked,&blocked_cost)) { executable=false; break; }
         if (std::hypot(p.x-pose.position.x,p.y-pose.position.y) <= .75) {
           const auto lp=map_to_local*tf::Vector3(p.x,p.y,0);
           if (!knownFootprint(*local_map,lp.x(),lp.y(),
-                             final_heading+tf::getYaw(map_to_local.getRotation()),stop_front_,rear_,half_width_)) {
-            failure="local_stop_envelope"; executable=false; break;
+                             final_heading+tf::getYaw(map_to_local.getRotation()),stop_front_,rear_,half_width_,&blocked,&blocked_cost)) {
+            blocked_local=true;failure="local_stop_envelope"; executable=false; break;
           }
         }
       }
@@ -465,14 +509,28 @@ bool Explore::selectBoundaryGoal(
       arrow.color.a=.9;arrow.color.r=executable?.2:1.;arrow.color.g=executable?1.:.15;
       arrow.lifetime=ros::Duration(3.);views.markers.push_back(arrow);
       if (!executable) {defer(failure);continue;}
-      const double score=-gain+.25*length+.30*std::abs(angleDifference(view_yaw,robot_yaw));
+      turn+=std::abs(angleDifference(view_yaw,final_heading));
+      const double score=-informationRate(gain,length,turn,scoring_speed_,scoring_yaw_speed_,goal_overhead_seconds_);
       if (score<best_score) {
         best_score=score;target_yaw_=view_yaw;target=candidate;found=true;
+        selected_gain=gain;selected_length=length;selected_turn=turn;
       }
   }
   frontier_cursor_=(cursor+1)%queues.size();
+  for(size_t i=0;i<queues.size();++i)candidate_cursors_[queue_keys[i]]=positions[i].next;
+  if(found)waiting_since_=ros::WallTime();
+  else if(waiting_since_.isZero())waiting_since_=cycle_start;
   std::ostringstream status;
-  status<<(found?"SELECTED":"WAITING")<<" frontiers="<<frontiers.size()<<" checked="<<calls<<" examined="<<examined;
+  status<<std::fixed<<std::setprecision(3);
+  status<<(found?"SELECTED":"WAITING")<<" frontiers="<<frontiers.size()<<" checked="<<calls<<" examined="<<examined
+        <<" candidates="<<candidate_count<<" selection_ms="<<(ros::WallTime::now()-cycle_start).toSec()*1000.;
+  if(found)status<<" gain_m2="<<selected_gain<<" route_m="<<selected_length
+                 <<" turn_rad="<<selected_turn<<" gain_per_second="<<-best_score;
+  else status<<" waiting_s="<<(cycle_start-waiting_since_).toSec()
+             <<" reason="<<(last_failure.empty()?"candidate_search_pending":last_failure);
+  if(!last_failure.empty())status<<" blocked_frame="<<blocked_frame<<" blocked_x="<<last_blocked.x
+      <<" blocked_y="<<last_blocked.y<<" blocked_cost="<<static_cast<int>(last_blocked_cost)
+      <<" blocked_path_distance_m="<<blocked_distance;
   for (const auto& entry:rejected) status<<" "<<entry.first<<"="<<entry.second;
   std_msgs::String message;message.data=status.str();selection_status_publisher_.publish(message);
   view_publisher_.publish(views);

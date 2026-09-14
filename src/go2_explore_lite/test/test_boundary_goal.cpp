@@ -6,6 +6,59 @@
 #include <explore/view_gain.h>
 #include <explore/anchored_path.h>
 #include <explore/arrival_view.h>
+#include <explore/candidate_search.h>
+
+TEST(CandidateSearch, RefinesUnsafeRepresentativeWithoutLosingNearbySafeGoal) {
+  costmap_2d::Costmap2D map(80,80,.05,-2,-2,costmap_2d::FREE_SPACE);
+  // The leading candidate's front overlaps this wall; its neighbor fits.
+  for(unsigned y=0;y<80;++y)map.setCost(52,y,costmap_2d::LETHAL_OBSTACLE);
+  geometry_msgs::Point unsafe,safe,other;
+  unsafe.x=.275;unsafe.y=.025;safe.x=.225;safe.y=.025;other.x=-.425;
+  ASSERT_EQ(explore::candidateKey(unsafe.x,unsafe.y,.20),explore::candidateKey(safe.x,safe.y,.20));
+  ASSERT_FALSE(explore::knownFootprint(map,unsafe.x,unsafe.y,0,.38,.38,.185));
+  ASSERT_TRUE(explore::knownFootprint(map,safe.x,safe.y,0,.38,.38,.185));
+  const auto result=explore::diverseCandidates({unsafe,safe,other,unsafe},.05);
+  ASSERT_EQ(result.size(),3u);
+  EXPECT_EQ(result[0].x,unsafe.x);EXPECT_EQ(result[1].x,other.x);EXPECT_EQ(result[2].x,safe.x);
+}
+
+TEST(CandidateSearch, BoundedSearchVisitsTailDespiteRepeatedFailuresAtHead) {
+  size_t offset=0;std::set<size_t> visited;
+  for(int cycle=0;cycle<9;++cycle) {
+    explore::CandidateCursor cursor(offset,101);
+    for(int check=0;check<12&&!cursor.empty();++check)visited.insert(cursor.pop());
+    offset=cursor.next;
+  }
+  EXPECT_EQ(visited.size(),101u);
+  explore::CandidateCursor resized(offset,7);
+  while(!resized.empty())EXPECT_LT(resized.pop(),7u);
+  EXPECT_TRUE(explore::CandidateCursor(15,0).empty());
+}
+
+TEST(CandidateSearch, WorldKeysDoNotDependOnGrowingMapOrigin) {
+  costmap_2d::Costmap2D before(80,80,.05,-2,-2,0),after(120,120,.05,-3,-3,0);
+  double bx,by,ax,ay;before.mapToWorld(20,20,bx,by);after.mapToWorld(40,40,ax,ay);
+  EXPECT_EQ(explore::candidateKey(bx,by,.05),explore::candidateKey(ax,ay,.05));
+  EXPECT_NE(explore::candidateKey(-.025,0,.05),explore::candidateKey(.025,0,.05));
+}
+
+TEST(CandidateSearch, RetryInvalidatesOnTranslationOrTurnButNotPoseNoise) {
+  EXPECT_FALSE(explore::retryPoseChanged(.01,.01,-M_PI+.01,0,0,M_PI-.01));
+  EXPECT_TRUE(explore::retryPoseChanged(.11,0,0,0,0,0));
+  EXPECT_TRUE(explore::retryPoseChanged(0,.11,0,0,0,0));
+  EXPECT_TRUE(explore::retryPoseChanged(0,0,.16,0,0,0));
+}
+
+TEST(CandidateSearch, PreferUsefulNearbyViewsOverMarginalGainAfterLongDetour) {
+  EXPECT_GT(explore::informationRate(1.,.6,0,.3,.5,2.),
+            explore::informationRate(1.2,3.,M_PI,.3,.5,2.));
+  EXPECT_GT(explore::informationRate(3.,1.,0,.3,.5,2.),
+            explore::informationRate(1.,.6,0,.3,.5,2.));
+  EXPECT_GT(explore::informationRate(1.,.6,0,.3,.5,2.),
+            explore::informationRate(1.,.6,M_PI,.3,.5,2.));
+  EXPECT_DOUBLE_EQ(explore::informationRate(1,1,0,0,.5,2),0);
+  EXPECT_DOUBLE_EQ(explore::informationRate(NAN,1,0,.3,.5,2),0);
+}
 
 TEST(BoundaryGoal, RingCenterCannotBeReturnedAsGoal) {
   geometry_msgs::Point robot;

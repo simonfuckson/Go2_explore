@@ -14,7 +14,7 @@ local_geometry:
   robot_base_frame: base_link
   transform_tolerance: 0.5
 visualize: true
-planner_frequency: 0.5
+planner_frequency: 1.0
 progress_timeout: 30.0
 potential_scale: 0.001
 orientation_scale: 0.0
@@ -25,5 +25,9 @@ minimum_goal_distance: 0.40
 # Height and pitch are read from GO2 terrain/extrinsics; prediction never clears cells.
 view_range: 3.0
 plan_checks_per_cycle: 12
+# Soft wall-time budget between candidates; a ROS service call may exceed it.
+selection_budget_ms: 75.0
+# Information gain / estimated travel + turn + goal-handshake time.
+goal_overhead_seconds: 2.0
 candidate_retry_seconds: 15.0
 failed_goal_retry_seconds: 30.0

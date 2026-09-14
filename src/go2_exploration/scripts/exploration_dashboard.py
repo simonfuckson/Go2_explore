@@ -32,6 +32,25 @@ def motion_evidence(values):
     return '已有非零指令；足端卸载距今 '+values.get('last_foot_unload_age_sec','?')+' s（-1 为未检测到）',1
 
 
+def selection_explanation(status):
+    fields=dict(token.split('=',1) for token in str(status).split() if '=' in token)
+    if str(status).startswith('SELECTED'):
+        return ('预计新增观测 '+fields.get('gain_m2','?')+' m² | 路程 '+fields.get('route_m','?')+
+                ' m | 选点耗时 '+fields.get('selection_ms','?')+' ms')
+    reason=fields.get('reason','')
+    labels={'global_footprint':'整条路径的机身范围受阻',
+            'local_stop_envelope':'近处转向或停车范围受阻',
+            'arrival_rotation':'目标处转身范围受阻',
+            'no_global_plan':'全局规划器找不到路径',
+            'candidate_search_pending':'继续搜索剩余候选点',
+            'no_frontier_tasks':'当前没有前沿任务，等待完成条件确认'}
+    text=labels.get(reason,'等待可执行目标')
+    if 'waiting_s' in fields:text+=' | 已等待 '+fields['waiting_s']+' s'
+    if reason in ('global_footprint','local_stop_envelope','arrival_rotation') and 'blocked_x' in fields:
+        text+=' | 阻塞位置 ('+fields['blocked_x']+', '+fields.get('blocked_y','?')+') '+fields.get('blocked_frame','')
+    return text
+
+
 class Dashboard:
     def __init__(self):
         self.lock=threading.RLock();self.latest={};self.first_failure=None;self.saw_enabled=False
@@ -181,6 +200,8 @@ class Dashboard:
         row('前沿任务',value('/exploration/frontier_status','尚无数据'),'/exploration/frontier_status')
         selection=value('/explore/selection_status','选点器未发布；停车后会停止选点')
         row('选点结果',selection,'/explore/selection_status',0 if str(selection).startswith('SELECTED') else 1,6.)
+        row('探索效率 / 等待原因',selection_explanation(selection),'/explore/selection_status',
+            0 if str(selection).startswith('SELECTED') else 1,6.,str(selection))
         target=value('/explore/selected_goal')
         row('最近选定目标',('x %.2f / y %.2f m (%s)'%tuple(target)) if target else '尚无目标','/explore/selected_goal',0,None)
         row('当前执行目标 / TEB','活动目标 '+g.get('move_base_status_live_goal_count','0')+' | 轨迹 '+g.get('local_plan_poses','0')+' 点','/go2_exploration_safety/status')

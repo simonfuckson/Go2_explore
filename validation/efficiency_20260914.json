@@ -1,0 +1,269 @@
+{
+  "passed": true,
+  "backup_tag": "backup-before-efficiency-20260914",
+  "backup_commit": "d17be2861220749e18d4a20055f1f28e898aa4b6",
+  "source_sha256": {
+    "README.md": "046dcf56c4d836555161c2e5a9d007791573f749815da6f7082dd7a02fd0c2e2",
+    "STARTUP_GUIDE_ZH.md": "db46234fa807149089c0112c04867e419dfba7ede8c47e6ce51d6113f257f8ac",
+    "EFFICIENCY_CHANGES_ZH.md": "05ff911196f44e4ee5fadf368f7d2e2018224db74a408d4dbaef3afcde778180",
+    "scripts/verify_selection_snapshot.py": "3072d4ebb27b04896cefd7581287b8ce00961cca6084cf3e5a1d80ca20987998",
+    "src/go2_explore_lite/test/snapshot_plan_server.cpp": "122e5cdf9e693545992a8ded8fddd7c2e913a1c4310189fc1117e25a38eb64da",
+    "src/go2_explore_lite/include/explore/candidate_search.h": "f7dbf720806486fa69c7e66af17ddba5423788ae932a4b06d01e9d61f7dc1643",
+    "src/go2_explore_lite/include/explore/explore.h": "4304e5e87994c9bc49636914390ed5c11e380f0f5cab3ad9de24d5142caf8b81",
+    "src/go2_explore_lite/src/explore.cpp": "94c4789233c9c7721f41b19e09c06ed935347aa232445268dce327bd2922a76e",
+    "src/go2_explore_lite/test/test_boundary_goal.cpp": "4f1d26d941f0083d20cfb9189c0b4b71ecf18212981f50e35aab62e9965bb120",
+    "src/go2_exploration/config/frontier.yaml": "52e89d796f5702152c1825159371b1beb8f8988baf0e464be6967dc7640d979b",
+    "src/go2_exploration/scripts/exploration_dashboard.py": "ab8e6e7e356834805057bd6e42fc3539ff5be1a9e27f73b9d4041c676747681b",
+    "src/go2_exploration/test/test_dashboard.py": "56ae2b8175b92ac799adff34a0238583e1dd709c36def9f851698c81c73606b1"
+  },
+  "binary_sha256": "ded2d9192a5206386fc82d686dd483f84ae9e85aabc07f002a755716585990c4",
+  "forced_relink": true,
+  "unit_tests": {
+    "frontier_cpp": 20,
+    "exploration_python": 64,
+    "safety_python": 126
+  },
+  "controls": {
+    "obstacle": {
+      "fault": "obstacle",
+      "directory": "/home/nvidia/go2_explore_ws/artifacts/simulation_obstacle_834e0a26",
+      "obstacle_recovery": true,
+      "passed": true,
+      "goal_count": 3,
+      "command_count": 701,
+      "nonzero_commands": 66,
+      "max_forward": 0.3,
+      "max_yaw": 0.5,
+      "states": [
+        "WAITING_FOR_READY",
+        "WAITING_FOR_GOAL",
+        "EXPLORING",
+        "WAITING_FOR_OBSTACLE",
+        "RECOVERING_AFTER_OBSTACLE",
+        "WAITING_FOR_GOAL",
+        "EXPLORING",
+        "STOPPED"
+      ],
+      "stop_result": {
+        "result": "STOPPED",
+        "map_name": "simulation_obstacle_834e0a26",
+        "real_sdk": false,
+        "save_status": "saved",
+        "wall_time": 1789210296.8102899
+      }
+    },
+    "tf": {
+      "fault": "tf",
+      "directory": "/home/nvidia/go2_explore_ws/artifacts/simulation_tf_98ecf0cc",
+      "fault_stop_and_no_rearm": true,
+      "passed": true,
+      "goal_count": 1,
+      "command_count": 598,
+      "nonzero_commands": 72,
+      "max_forward": 0.3,
+      "max_yaw": 0.5,
+      "states": [
+        "WAITING_FOR_READY",
+        "WAITING_FOR_GOAL",
+        "EXPLORING",
+        "FAULT_STOPPED",
+        "STOPPED"
+      ],
+      "stop_result": {
+        "result": "STOPPED",
+        "map_name": "simulation_tf_98ecf0cc",
+        "real_sdk": false,
+        "save_status": "saved",
+        "wall_time": 1789210318.0296519
+      }
+    },
+    "raw": {
+      "fault": "raw",
+      "directory": "/home/nvidia/go2_explore_ws/artifacts/simulation_raw_5b633570",
+      "fault_stop_and_no_rearm": true,
+      "passed": true,
+      "goal_count": 1,
+      "command_count": 567,
+      "nonzero_commands": 66,
+      "max_forward": 0.3,
+      "max_yaw": 0.5,
+      "states": [
+        "WAITING_FOR_READY",
+        "WAITING_FOR_GOAL",
+        "EXPLORING",
+        "FAULT_STOPPED",
+        "STOPPED"
+      ],
+      "stop_result": {
+        "result": "STOPPED",
+        "map_name": "simulation_raw_5b633570",
+        "real_sdk": false,
+        "save_status": "saved",
+        "wall_time": 1789210338.6022804
+      }
+    },
+    "takeover": {
+      "fault": "takeover",
+      "directory": "/home/nvidia/go2_explore_ws/artifacts/simulation_takeover_27f1ee65",
+      "fault_stop_and_no_rearm": true,
+      "passed": true,
+      "goal_count": 2,
+      "command_count": 563,
+      "nonzero_commands": 62,
+      "max_forward": 0.3,
+      "max_yaw": 0.5,
+      "states": [
+        "WAITING_FOR_READY",
+        "WAITING_FOR_GOAL",
+        "EXPLORING",
+        "FAULT_STOPPED",
+        "STOPPED"
+      ],
+      "stop_result": {
+        "result": "STOPPED",
+        "map_name": "simulation_takeover_27f1ee65",
+        "real_sdk": false,
+        "save_status": "saved",
+        "wall_time": 1789210359.2460623
+      }
+    }
+  },
+  "snapshot_replay": {
+    "snapshot": "snapshot_1789208402456450904",
+    "real_motion_tested": false,
+    "runs": {
+      "baseline": {
+        "statuses": [
+          [
+            6117.312071456,
+            "WAITING frontiers=1 checked=12 examined=34 global_footprint=12 goal_footprint=22"
+          ],
+          [
+            6119.318810432,
+            "WAITING frontiers=1 checked=12 examined=59 cooldown=34 global_footprint=12 goal_footprint=13"
+          ],
+          [
+            6121.28686144,
+            "WAITING frontiers=1 checked=7 examined=70 cooldown=59 global_footprint=7 goal_footprint=4"
+          ],
+          [
+            6123.234333024,
+            "WAITING frontiers=1 checked=0 examined=70 cooldown=70"
+          ],
+          [
+            6125.235503136,
+            "WAITING frontiers=1 checked=0 examined=70 cooldown=70"
+          ],
+          [
+            6127.234538656,
+            "WAITING frontiers=1 checked=0 examined=70 cooldown=70"
+          ],
+          [
+            6129.234426464,
+            "WAITING frontiers=1 checked=0 examined=70 cooldown=70"
+          ],
+          [
+            6131.23448208,
+            "WAITING frontiers=1 checked=0 examined=70 cooldown=70"
+          ]
+        ],
+        "selected_goals": 0,
+        "status_count": 8,
+        "checked": 31
+      },
+      "candidate": {
+        "statuses": [
+          [
+            6134.695661152,
+            "WAITING frontiers=1 checked=9 examined=31 candidates=788 selection_ms=77.523 waiting_s=0.000 reason=global_footprint blocked_frame=map blocked_x=-2.025 blocked_y=-6.025 blocked_cost=254 blocked_path_distance_m=0.043 global_footprint=9 goal_footprint=22"
+          ],
+          [
+            6135.6993016,
+            "WAITING frontiers=1 checked=9 examined=18 candidates=788 selection_ms=81.773 waiting_s=1.000 reason=global_footprint blocked_frame=map blocked_x=-2.025 blocked_y=-6.025 blocked_cost=254 blocked_path_distance_m=0.043 global_footprint=9 goal_footprint=9"
+          ],
+          [
+            6136.694011232,
+            "WAITING frontiers=1 checked=8 examined=13 candidates=788 selection_ms=76.324 waiting_s=2.000 reason=global_footprint blocked_frame=map blocked_x=-2.025 blocked_y=-6.025 blocked_cost=254 blocked_path_distance_m=0.043 global_footprint=8 goal_footprint=5"
+          ],
+          [
+            6137.695578464,
+            "WAITING frontiers=1 checked=9 examined=26 candidates=788 selection_ms=77.973 waiting_s=3.000 reason=global_footprint blocked_frame=map blocked_x=-2.025 blocked_y=-6.025 blocked_cost=254 blocked_path_distance_m=0.043 global_footprint=9 goal_footprint=17"
+          ],
+          [
+            6138.694108736,
+            "WAITING frontiers=1 checked=9 examined=19 candidates=788 selection_ms=76.461 waiting_s=4.000 reason=global_footprint blocked_frame=map blocked_x=-2.025 blocked_y=-6.025 blocked_cost=254 blocked_path_distance_m=0.043 global_footprint=9 goal_footprint=10"
+          ],
+          [
+            6139.693733888,
+            "WAITING frontiers=1 checked=8 examined=12 candidates=788 selection_ms=75.790 waiting_s=5.000 reason=global_footprint blocked_frame=map blocked_x=-2.025 blocked_y=-6.025 blocked_cost=254 blocked_path_distance_m=0.043 global_footprint=8 goal_footprint=4"
+          ],
+          [
+            6140.697356832,
+            "WAITING frontiers=1 checked=9 examined=12 candidates=788 selection_ms=79.465 waiting_s=6.000 reason=global_footprint blocked_frame=map blocked_x=-2.025 blocked_y=-6.025 blocked_cost=254 blocked_path_distance_m=0.043 global_footprint=9 goal_footprint=3"
+          ],
+          [
+            6141.6961696,
+            "WAITING frontiers=1 checked=10 examined=25 candidates=788 selection_ms=78.422 waiting_s=7.000 reason=global_footprint blocked_frame=map blocked_x=-2.025 blocked_y=-6.025 blocked_cost=254 blocked_path_distance_m=0.043 global_footprint=10 goal_footprint=15"
+          ],
+          [
+            6142.69585792,
+            "WAITING frontiers=1 checked=9 examined=15 candidates=788 selection_ms=78.131 waiting_s=8.000 reason=global_footprint blocked_frame=map blocked_x=-2.025 blocked_y=-6.025 blocked_cost=254 blocked_path_distance_m=0.043 global_footprint=9 goal_footprint=6"
+          ],
+          [
+            6143.698810624,
+            "WAITING frontiers=1 checked=9 examined=13 candidates=788 selection_ms=81.296 waiting_s=9.000 reason=global_footprint blocked_frame=map blocked_x=-2.025 blocked_y=-6.025 blocked_cost=254 blocked_path_distance_m=0.043 global_footprint=9 goal_footprint=4"
+          ],
+          [
+            6144.695483264,
+            "WAITING frontiers=1 checked=7 examined=20 candidates=788 selection_ms=77.872 waiting_s=10.000 reason=global_footprint blocked_frame=map blocked_x=-2.025 blocked_y=-6.025 blocked_cost=254 blocked_path_distance_m=0.043 global_footprint=7 goal_footprint=13"
+          ],
+          [
+            6145.695505024,
+            "WAITING frontiers=1 checked=9 examined=21 candidates=788 selection_ms=77.763 waiting_s=11.000 reason=global_footprint blocked_frame=map blocked_x=-2.025 blocked_y=-6.025 blocked_cost=254 blocked_path_distance_m=0.043 global_footprint=9 goal_footprint=12"
+          ],
+          [
+            6146.694400128,
+            "WAITING frontiers=1 checked=8 examined=13 candidates=788 selection_ms=76.571 waiting_s=12.000 reason=global_footprint blocked_frame=map blocked_x=-2.025 blocked_y=-6.025 blocked_cost=254 blocked_path_distance_m=0.043 global_footprint=8 goal_footprint=5"
+          ],
+          [
+            6147.69662544,
+            "WAITING frontiers=1 checked=9 examined=17 candidates=788 selection_ms=79.040 waiting_s=13.000 reason=global_footprint blocked_frame=map blocked_x=-2.025 blocked_y=-6.025 blocked_cost=254 blocked_path_distance_m=0.043 global_footprint=9 goal_footprint=8"
+          ],
+          [
+            6148.695891232,
+            "WAITING frontiers=1 checked=9 examined=17 candidates=788 selection_ms=78.242 waiting_s=14.000 reason=global_footprint blocked_frame=map blocked_x=-2.025 blocked_y=-6.025 blocked_cost=254 blocked_path_distance_m=0.043 global_footprint=9 goal_footprint=8"
+          ],
+          [
+            6149.693544288,
+            "WAITING frontiers=1 checked=7 examined=14 candidates=788 selection_ms=75.803 waiting_s=15.000 reason=global_footprint blocked_frame=map blocked_x=-2.025 blocked_y=-6.025 blocked_cost=254 blocked_path_distance_m=0.043 global_footprint=7 goal_footprint=7"
+          ]
+        ],
+        "selected_goals": 0,
+        "status_count": 16,
+        "checked": 138
+      }
+    },
+    "no_motion_commands": true,
+    "passed": true
+  },
+  "unchanged_original_files": 1494,
+  "missing_preexisting_map_files": 89,
+  "workspace_validation": true,
+  "real_motion_tested_after_change": false,
+  "autonomous_stairs_implemented": false,
+  "site_stairs_report": "Five consecutive steps; classic gait can traverse up and down by remote control",
+  "prior_real_session_stop": {
+    "result": "STOPPED",
+    "map_name": "room_real_20260914_11",
+    "real_sdk": true,
+    "save_status": "saved",
+    "wall_time": 1789208797.2606156,
+    "process_exit": 0,
+    "pcd_present": true,
+    "snapshot_manifest": true,
+    "forced_shutdown": false,
+    "failure": null,
+    "success": true
+  },
+  "processes_stopped": true
+}

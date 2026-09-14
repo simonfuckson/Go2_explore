@@ -14,6 +14,13 @@ spec=importlib.util.spec_from_file_location('dashboard',str(path))
 module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
 
 class DashboardEvidence(unittest.TestCase):
+    def test_waiting_route_obstruction_is_not_reported_as_gait_failure_or_completion(self):
+        text=module.selection_explanation('WAITING reason=global_footprint waiting_s=123.0 blocked_x=-2.025 blocked_y=-6.025 blocked_frame=map')
+        self.assertIn('机身范围受阻',text);self.assertIn('123.0',text);self.assertIn('-2.025',text)
+        self.assertNotIn('步态',text);self.assertNotIn('完成',text)
+        text=module.selection_explanation('SELECTED gain_m2=1.25 route_m=0.80 selection_ms=12.2')
+        self.assertIn('1.25',text);self.assertIn('0.80',text);self.assertIn('12.2',text)
+
     def test_no_command_is_not_reported_as_successful_stepping(self):
         text,level=module.motion_evidence({'last_nonzero_command_age_sec':'-1','no_step_response':'false'})
         self.assertIn('无法判断',text);self.assertEqual(level,1)
