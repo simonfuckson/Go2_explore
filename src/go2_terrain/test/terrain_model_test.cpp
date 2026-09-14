@@ -552,6 +552,30 @@ TEST(TerrainModel, GravityAlignmentPreservesYawOnly) {
   EXPECT_NEAR(std::sin(0.7), forward.y(), 1e-9);
 }
 
+TEST(TerrainModel, FlatGroundAdmissionAcceptsSparseGroundButKeepsDataFailures) {
+  gt::GroundPlaneEstimate plane;
+  plane.valid = true;
+  plane.status = gt::GroundPlaneFitStatus::kValid;
+  // The latest run had a valid plane but only 0.1575 m2 near support (<0.18).
+  EXPECT_EQ(gt::TerrainFrameHealthClass::kSoftGeometryFailure,
+      gt::classifyTerrainFrameHealth(true, true, true, false, true, plane, true));
+  EXPECT_EQ(gt::TerrainFrameHealthClass::kHealthy,
+      gt::classifyTerrainFrameHealth(true, true, true, false, true, plane, true, false));
+  plane.valid = false;
+  for (auto status : {gt::GroundPlaneFitStatus::kInsufficientConnectedSamples,
+                     gt::GroundPlaneFitStatus::kExcessiveResidual,
+                     gt::GroundPlaneFitStatus::kSensorHeightBelowMinimum,
+                     gt::GroundPlaneFitStatus::kSensorHeightAboveMaximum}) {
+    plane.status = status;
+    EXPECT_EQ(gt::TerrainFrameHealthClass::kHealthy,
+        gt::classifyTerrainFrameHealth(true, false, false, false, false, plane, true, false));
+    EXPECT_EQ(gt::TerrainFrameHealthClass::kHardFailure,
+        gt::classifyTerrainFrameHealth(false, false, false, false, false, plane, true, false));
+    EXPECT_EQ(gt::TerrainFrameHealthClass::kHardFailure,
+        gt::classifyTerrainFrameHealth(true, false, false, false, false, plane, false, false));
+  }
+}
+
 TEST(TerrainModel, LowSupportCandidateSurvivesSameCellCeilingReturn) {
   const float height = gt::robustLowSupportHeight(
       {-0.52F, -0.50F, 2.02F, 2.05F}, 0.10, 0.15);

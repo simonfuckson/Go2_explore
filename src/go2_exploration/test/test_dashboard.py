@@ -67,4 +67,18 @@ class DashboardEvidence(unittest.TestCase):
         self.node.odometry(message)
         self.assertEqual(len(self.node.trajectory.poses),2)
 
+    def test_flat_mode_labels_support_as_information_and_keeps_stream_fault_visible(self):
+        values=[KeyValue(key='ground_geometry_checks',value='disabled'),
+                KeyValue(key='near_support_area_m2',value='0.1575')]
+        for level in (0,2):
+            status=DiagnosticStatus(name='terrain',level=level,
+                message='terrain input stale' if level else 'perception ready',values=values)
+            self.node.receive(DiagnosticArray(status=[status]),'/terrain/status')
+            with patch.object(module.rospy.Time,'now',return_value=module.rospy.Time(123)):
+                rows={r['name']:r for r in self.node.snapshot()['rows']}
+            self.assertNotIn('地形健康',rows)
+            self.assertEqual(rows['避障感知']['level'],level)
+            self.assertEqual(rows['地面支撑（仅显示）']['level'],0)
+            if level:self.assertIn('stale',rows['避障感知']['value'])
+
 if __name__=='__main__':unittest.main()

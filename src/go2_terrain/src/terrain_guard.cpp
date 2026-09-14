@@ -150,6 +150,7 @@ class TerrainGuard {
                thresholds_.max_relative_height, 1.50);
     pnh_.param("output/publish_debug_clouds", publish_debug_clouds_, false);
     pnh_.param("health/input_timeout_sec", input_timeout_sec_, 0.60);
+    pnh_.param("health/require_ground_geometry", require_ground_geometry_, true);
     pnh_.param("health/min_input_points", min_input_points_, 20);
     pnh_.param("health/min_ground_points", min_ground_points_, 20);
     pnh_.param("health/minimum_connected_ground_area_m2",
@@ -482,12 +483,14 @@ class TerrainGuard {
             candidate_heights, connected_ground,
             surface_candidate_heights, surface_samples,
             ground_connectivity_, steep_surface_);
-    active_ground_plane_fit_ = go2_terrain::groundPlaneFitForHealthGate(
-        ground_plane_fit_, health_hysteresis_state_.gate_open,
-        sensor_height_hysteresis_m_);
-    last_ground_plane_ = go2_terrain::estimateConnectedGroundPlane(
-        candidate_heights, connected_ground, ground_connectivity_,
-        active_ground_plane_fit_);
+    if (require_ground_geometry_) {
+      active_ground_plane_fit_ = go2_terrain::groundPlaneFitForHealthGate(
+          ground_plane_fit_, health_hysteresis_state_.gate_open,
+          sensor_height_hysteresis_m_);
+      last_ground_plane_ = go2_terrain::estimateConnectedGroundPlane(
+          candidate_heights, connected_ground, ground_connectivity_,
+          active_ground_plane_fit_);
+    }
     for (std::size_t index = 0; index < cells.size(); ++index) {
       cells[index].valid = connected_ground[index] != 0U;
     }
@@ -611,12 +614,16 @@ class TerrainGuard {
     frame_health_class_ = go2_terrain::classifyTerrainFrameHealth(
         enough_input_points, enough_ground_points, enough_connected_area,
         enough_near_support, enough_sector_coverage, last_ground_plane_,
-        processing_within_deadline);
+        processing_within_deadline, require_ground_geometry_);
     frame_healthy_ =
         frame_health_class_ == go2_terrain::TerrainFrameHealthClass::kHealthy;
     updateFrameHealthGate(start);
     if (static_cast<int>(last_input_points_) < min_input_points_) {
       frame_reason_ = "too few input points";
+    } else if (!processing_within_deadline) {
+      frame_reason_ = "processing deadline exceeded";
+    } else if (!require_ground_geometry_) {
+      frame_reason_ = "perception ready (ground geometry checks disabled)";
     } else if (static_cast<int>(last_ground_points_) < min_ground_points_) {
       frame_reason_ = "too few ground points";
     } else if (last_ground_coverage_.connected_area_m2 <
@@ -668,8 +675,6 @@ class TerrainGuard {
           frame_reason_ = "connected ground plane validity mismatch";
           break;
       }
-    } else if (last_processing_ms_ > max_processing_ms_) {
-      frame_reason_ = "processing deadline exceeded";
     } else {
       frame_reason_ = "healthy";
     }
@@ -757,11 +762,15 @@ class TerrainGuard {
                    kSoftGeometryFailure) {
       status.message = frame_reason_;
     } else if (!healthy) {
-      status.message = "collecting consecutive healthy terrain frames";
+      status.message = require_ground_geometry_
+                           ? "collecting consecutive healthy terrain frames"
+                           : "collecting consecutive valid perception frames";
     } else {
       status.message = frame_reason_;
     }
     status.values.push_back(keyValue("expected_frame", expected_frame_));
+    status.values.push_back(keyValue(
+        "ground_geometry_checks", require_ground_geometry_ ? "enabled" : "disabled"));
     status.values.push_back(keyValue("input_age_sec", asString(input_age)));
     status.values.push_back(
         keyValue("input_points", asString(last_input_points_)));
@@ -779,7 +788,9 @@ class TerrainGuard {
         asString(last_ground_coverage_.covered_sectors)));
     status.values.push_back(keyValue(
         "ground_plane_fit_status",
-        go2_terrain::groundPlaneFitStatusName(last_ground_plane_.status)));
+        require_ground_geometry_
+            ? go2_terrain::groundPlaneFitStatusName(last_ground_plane_.status)
+            : "not_evaluated"));
     status.values.push_back(keyValue(
         "ground_plane_samples", asString(last_ground_plane_.sample_count)));
     status.values.push_back(keyValue(
@@ -893,6 +904,7 @@ class TerrainGuard {
   go2_terrain::GroundPlaneEstimate last_ground_plane_;
   go2_terrain::NongroundThresholds thresholds_;
   bool publish_debug_clouds_ = false;
+  bool require_ground_geometry_ = true;
   double input_timeout_sec_ = 0.60;
   int min_input_points_ = 20;
   int min_ground_points_ = 20;

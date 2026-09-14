@@ -48,6 +48,9 @@ def main():
         assert params['/go2_velocity_shaper/max_wz']==.50
         assert params['/go2_velocity_shaper/allow_reverse'] is False
         assert params['/go2_terrain_guard/output/publish_debug_clouds'] is True
+        assert params['/go2_terrain_guard/health/require_ground_geometry'] is False
+        assert params['/exploration/terrain_geometry_checks'] is False
+        assert params['/go2_velocity_shaper/require_terrain_health'] is True
         assert params['/move_base/local_costmap/obstacle_layer/terrain_clearing/topic']=='/exploration/self_filter/clearing_points'
         assert '/go2_exploration_sensor_guard/self_filter/enabled' in params
         assert params['/move_base/local_costmap/obstacle_layer/terrain_marking/topic']=='/terrain/obstacle_points'

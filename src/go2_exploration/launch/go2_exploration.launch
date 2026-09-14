@@ -10,8 +10,10 @@
   <arg name="rviz" default="true"/>
   <arg name="camera" default="true"/>
   <arg name="lidar_blind" default="0.70"/>
+  <arg name="terrain_geometry_checks" default="false"/>
   <arg name="completion_hold_time" default="30.0"/>
   <param name="/exploration/runtime_mode" value="$(eval 'simulation' if not arg('start_sensors') else 'real' if arg('use_real_sdk') else 'observe')"/>
+  <param name="/exploration/terrain_geometry_checks" value="$(arg terrain_geometry_checks)"/>
 
   <group if="$(arg start_sensors)">
     <include if="$(arg camera)" file="$(find go2_exploration)/launch/include/camera.launch.xml"/>
@@ -37,6 +39,8 @@
     <!-- GO2 normally disables safe_ground together with debug clouds.
          Exploration requires that measured support grid for coverage memory. -->
     <param name="/go2_terrain_guard/output/publish_debug_clouds" value="true"/>
+    <!-- Flat-ground mode keeps obstacle extraction and live data checks. -->
+    <param name="/go2_terrain_guard/health/require_ground_geometry" value="$(arg terrain_geometry_checks)"/>
   </group>
   <node pkg="tf2_ros" type="static_transform_publisher" name="go2_exploration_map_frame"
         args="0 0 0 0 0 0 map odom"/>

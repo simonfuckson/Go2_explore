@@ -256,9 +256,14 @@ inline TerrainFrameHealthClass classifyTerrainFrameHealth(
     bool enough_input_points, bool enough_ground_points,
     bool enough_connected_area, bool enough_near_support,
     bool enough_sector_coverage, const GroundPlaneEstimate& plane,
-    bool processing_within_deadline) {
+    bool processing_within_deadline, bool require_ground_geometry = true) {
   if (!enough_input_points || !processing_within_deadline) {
     return TerrainFrameHealthClass::kHardFailure;
+  }
+  // Flat-ground exploration requires valid perception, not a ground-quality
+  // score. Obstacle classification and measured clearing remain independent.
+  if (!require_ground_geometry) {
+    return TerrainFrameHealthClass::kHealthy;
   }
   if (!plane.valid) {
     switch (plane.status) {

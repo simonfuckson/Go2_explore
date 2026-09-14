@@ -262,10 +262,12 @@ def run(args):
     os.environ['ROS_LOG_DIR']=str(directory/'ros')
     auto=args.command=='explore' and not args.no_auto_start
     auto_reenable=auto and not args.no_auto_reenable
+    terrain_geometry_checks=bool(getattr(args,'terrain_geometry_checks',False))
     command=['roslaunch','-p',str(port),'go2_exploration','go2_exploration.launch',
              'map_name:='+args.name,'map_root:='+str(WS/'maps'),
              'session_dir:='+str(directory),'auto_start:='+str(auto).lower(),
              'auto_reenable:='+str(auto_reenable).lower(),
+             'terrain_geometry_checks:='+str(terrain_geometry_checks).lower(),
              'use_real_sdk:='+str(args.real).lower(),'network_interface:='+args.interface,
              'rviz:='+str(args.rviz).lower(),'camera:='+str(args.camera).lower(),
              'lidar_blind:='+str(args.lidar_blind)]
@@ -274,6 +276,7 @@ def run(args):
           'launch_pid':child.pid,'session_dir':str(directory),'map_name':args.name,
           'real_sdk':args.real,'auto_start':auto,'master_uri':os.environ['ROS_MASTER_URI'],
           'auto_reenable':auto_reenable,
+          'terrain_geometry_checks':terrain_geometry_checks,
           'rviz':args.rviz,'camera':args.camera,'display':os.environ.get('DISPLAY',''),
           'lidar_blind_m':args.lidar_blind}
     atomic_json(STATE,data)
@@ -398,6 +401,8 @@ def main():
         start.add_argument('--no-camera',dest='camera',action='store_false',default=True,
                            help='Disable the D435i video stream')
         start.add_argument('--record',action='store_true')
+        start.add_argument('--terrain-geometry-checks',action='store_true',
+                           help='Restore ground support, plane quality and fitted height admission checks')
         start.add_argument('--lidar-blind',type=float,default=.70,
                            help='Per-session Livox near-range rejection in metres (default 0.70)')
     for command in ('status','stop','save-map','rviz'): sub.add_parser(command)

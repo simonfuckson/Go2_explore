@@ -134,7 +134,7 @@ class Dashboard:
                 'confirming_stable_recovery':'持续确认健康数据',
                 'waiting_for_standstill_and_clear_stop_region':'等待停稳和停车范围可通行',
                 'odom_health_unavailable':'里程计尚未恢复',
-                'terrain_health_unavailable':'地形尚未恢复',
+                'terrain_health_unavailable':'避障感知尚未就绪，详见感知状态',
                 'sdk_or_gait_fault':'原 SDK 健康诊断或步态故障未消除',
                 'remote_or_posture_override':'遥控或姿态控制接管',
                 'automatic_reenable_disabled':'本会话已关闭自动恢复',
@@ -168,9 +168,14 @@ class Dashboard:
                         'ALIGN_TO_PATH':'原地对准路径','TEB_FORWARD':'沿 TEB 路径前进'}.get(execution,execution)
         row('规划执行方式',str(execution_text),'/move_base/TebLocalPlannerROS/execution_mode',
             1 if execution=='LOCAL_STOP_ENVELOPE_BLOCKED' else 0,limit=None,detail=str(execution))
-        row('地形健康',terrain['message'],'/terrain/status',terrain['level'],1.,json.dumps(t,ensure_ascii=False,indent=2))
-        row('地形数据','频率 '+t.get('output_rate_hz','?')+' Hz | 高度 '+t.get('estimated_sensor_height_m','?')+' m','/terrain/status',terrain['level'])
-        row('地面支撑','近场 '+t.get('near_support_area_m2','?')+' m² | 连通 '+t.get('connected_ground_area_m2','?')+' m²','/terrain/status',terrain['level'])
+        flat=t.get('ground_geometry_checks')=='disabled'
+        row('避障感知' if flat else '地形健康',
+            '感知就绪：地形评分已关闭，避障检查有效' if flat and terrain['level']==0 else terrain['message'],
+            '/terrain/status',terrain['level'],1.,json.dumps(t,ensure_ascii=False,indent=2))
+        row('感知数据' if flat else '地形数据','频率 '+t.get('output_rate_hz','?')+' Hz | '+
+            ('平地探索模式' if flat else '高度 '+t.get('estimated_sensor_height_m','?')+' m'),'/terrain/status',terrain['level'])
+        row('地面支撑（仅显示）' if flat else '地面支撑','近场 '+t.get('near_support_area_m2','?')+' m² | 连通 '+t.get('connected_ground_area_m2','?')+' m²',
+            '/terrain/status',0 if flat else terrain['level'])
         row('地图更新',value('/exploration/map_status','尚无数据'),'/exploration/map_status')
         row('地面覆盖',value('/exploration/coverage_status','尚无数据'),'/exploration/coverage_status')
         row('前沿任务',value('/exploration/frontier_status','尚无数据'),'/exploration/frontier_status')
@@ -192,7 +197,7 @@ class Dashboard:
         if self.first_failure:
             reason=self.first_failure['diagnostic']['message']
         else:reason='本监视器启动后尚未捕获；已停车的历史原因请看会话日志'
-        rows.append(dict(name='地形首次失败原因',value=reason,level=2 if self.first_failure else 1,age=None,detail=json.dumps(self.first_failure,ensure_ascii=False,indent=2)))
+        rows.append(dict(name='感知首次失败原因' if flat else '地形首次失败原因',value=reason,level=2 if self.first_failure else 1,age=None,detail=json.dumps(self.first_failure,ensure_ascii=False,indent=2)))
         mode=getattr(self,'mode','unknown')
         label={'simulation':'全虚拟模拟场景','observe':'真实传感器 · 模拟底盘','real':'真机自主探索'}.get(mode,'运行模式未确认')
         return dict(state=state,mode=mode,title=label+'\n'+STATES.get(state,state),rows=rows,stamp=rospy.Time.now().to_sec())
