@@ -44,6 +44,6 @@ install(TARGETS go2_exploration_plugins go2_exploration_rviz go2_exploration_sen
 install(DIRECTORY config launch DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 install(FILES go2_exploration_plugins.xml rviz_plugins.xml
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
-catkin_install_python(PROGRAMS test/synthetic_world.py scripts/ground_clearing_adapter.py scripts/odom_health.py scripts/explore_supervisor.py scripts/check_exploration.py scripts/check_navigation_clearance.py
+catkin_install_python(PROGRAMS test/synthetic_world.py scripts/record_motion_evidence.py scripts/ground_clearing_adapter.py scripts/odom_health.py scripts/explore_supervisor.py scripts/check_exploration.py scripts/check_navigation_clearance.py
                  scripts/frontier_costmap_adapter.py scripts/observed_map_memory.py scripts/exploration_dashboard.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})

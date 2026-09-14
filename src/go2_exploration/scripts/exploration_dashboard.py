@@ -65,7 +65,7 @@ class Dashboard:
         for topic in ('/terrain/status','/go2_exploration_safety/status','/go2/diagnostics'):
             self.subscribe(topic,DiagnosticArray)
         for topic in ('/exploration/state','/exploration/odom_status','/exploration/map_status',
-                      '/exploration/recovery_status',
+                      '/exploration/recovery_status','/exploration/evidence_status',
                       '/exploration/coverage_status','/exploration/frontier_status','/explore/selection_status',
                       '/exploration/clearing_status','/exploration/sensor_status','/exploration/self_filter/status','/move_base/TebLocalPlannerROS/execution_mode'):
             self.subscribe(topic,String)
@@ -184,6 +184,9 @@ class Dashboard:
         sensor=str(value('/exploration/sensor_status','尚无真实雷达监测'))
         row('雷达网络 / 数据连续性',sensor,'/exploration/sensor_status',2 if sensor.startswith('FAULT:') else 0, .3,
             'eth1 为 MID360 网络。断流后停止向 FAST-LIO 输入，修复网线/供电后重启会话；不会自动恢复运动。')
+        evidence=str(value('/exploration/evidence_status','等待记录器'))
+        row('运动数据记录',evidence,'/exploration/evidence_status',0 if evidence.startswith('recording:') else 1,2.,
+            '完整里程计与 TF，点云每秒 2 帧；每轮上限约 128 MiB，低磁盘空间时停止记录。文件位于本轮日志目录。')
         row('地面网格清空',str(value('/exploration/clearing_status','尚无数据')),'/exploration/clearing_status')
         mask=str(value('/exploration/self_filter/status','模拟场景无硬件自身过滤'))
         mask_text=('未启用：等待相机和支架安装范围标定' if mask.startswith('disabled:') else

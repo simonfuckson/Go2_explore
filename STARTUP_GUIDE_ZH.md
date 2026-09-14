@@ -1,5 +1,7 @@
 # GO2 在线自主探索启动手册
 
+**台阶监测后的更新：**修复倾斜坐标系下的定位连续性误锁；正常启动会额外保存 `motion_evidence.bag`，约 128 MiB 上限，RViz 显示“运动数据记录”。无需添加 `--record` 即可保留常用运动诊断数据。自主上阶尚未放行，详见 [STAIRS_DIAGNOSIS_ZH.md](STAIRS_DIAGNOSIS_ZH.md)。
+
 **本次急停修复已部署：**启动命令不变，下一次启动生效。规划器要求停车时立即输出零速度，RViz 新增“规划停车请求 / 自动恢复准入”，显示具体等待条件；急停现场数据单独写入本轮状态日志。验证和现场分析见 [STOP_TIMING_FIX_ZH.md](STOP_TIMING_FIX_ZH.md)。
 
 **选点效率更新：**启动命令不变，RViz 增加“探索效率 / 等待原因”，显示路径长度、预计观测收益、等待时间和阻塞坐标。保留 0.30 m/s、0.50 rad/s 上限；五级台阶的自主通行尚未适配。详见 [EFFICIENCY_CHANGES_ZH.md](EFFICIENCY_CHANGES_ZH.md)。

@@ -2,12 +2,23 @@
 import math
 
 
+def quaternion_distance(first, second):
+    """Shortest 3-D rotation, invariant to frame tilt and quaternion sign."""
+    dot=sum(a*b for a,b in zip(first,second))
+    scale=math.sqrt(sum(a*a for a in first)*sum(b*b for b in second))
+    return 2*math.acos(min(1.,abs(dot)/scale))
+
+
 class OdometryHealth:
     def __init__(self):
         self.samples = {}
         self.fault = None
+        self.first_fault_context = None
+        self.orientations = {}
 
     def observe(self, stream, stamp, position, quaternion, twist, received):
+        if self.fault:
+            return  # Preserve the first fault and its measured before/after pair.
         values = tuple(position)+tuple(quaternion)+tuple(twist)+(stamp,)
         if not all(math.isfinite(v) for v in values) or stamp <= 0:
             self.fault = 'nonfinite_or_unstamped_odometry'
@@ -27,11 +38,21 @@ class OdometryHealth:
             if dt == 0:
                 return  # repeated messages cannot refresh a frozen sensor
             distance=math.sqrt(sum((a-b)**2 for a,b in zip(position,previous[1])))
-            angle=abs(math.atan2(math.sin(yaw-previous[2]),math.cos(yaw-previous[2])))
+            yaw_delta=abs(math.atan2(math.sin(yaw-previous[2]),math.cos(yaw-previous[2])))
+            # body_lio is tilted relative to the body. Its Euler yaw can jump
+            # near vertical pitch while the measured 3-D rotation stays small.
+            angle=quaternion_distance(quaternion,self.orientations[stream])
             if distance > .25+1.2*dt or angle > .35+1.6*dt:
                 self.fault='odometry_discontinuity'
+                self.first_fault_context=dict(stream=stream,previous_stamp=previous[0],stamp=stamp,
+                    delta_sec=dt,previous_position=list(previous[1]),position=list(position),
+                    previous_quaternion=list(self.orientations[stream]),quaternion=list(quaternion),
+                    translation_delta_m=distance,translation_limit_m=.25+1.2*dt,
+                    yaw_delta_rad=yaw_delta,rotation_delta_rad=angle,
+                    rotation_limit_rad=.35+1.6*dt,twist=list(twist))
                 return
         self.samples[stream]=(stamp,tuple(position),yaw,received)
+        self.orientations[stream]=tuple(quaternion)
 
     def problem(self, now_ros, now_wall, initialized, tf_stamp):
         if self.fault:

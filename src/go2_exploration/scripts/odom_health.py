@@ -47,7 +47,8 @@ class HealthNode:
                     'delta_sec':stamp-previous[0] if previous else None,
                     'received_ros':rospy.Time.now().to_sec(),'received_monotonic':time.monotonic(),
                     'frame':message.header.frame_id,'child':message.child_frame_id,
-                    'publisher':getattr(message,'_connection_header',{}).get('callerid')},sort_keys=True))
+                    'publisher':getattr(message,'_connection_header',{}).get('callerid'),
+                    'motion_evidence':self.state.first_fault_context},sort_keys=True))
 
     def run(self):
         while not rospy.is_shutdown():

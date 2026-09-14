@@ -2,7 +2,7 @@ import math
 from types import SimpleNamespace as S
 import unittest
 from go2_exploration_safety.go2_contract import body_envelope,command_problem,sdk_effective_velocity,UpstreamHealth
-from go2_exploration_safety.odometry_health import OdometryHealth
+from go2_exploration_safety.odometry_health import OdometryHealth,quaternion_distance
 
 
 def twist(v=0,w=0):
@@ -55,6 +55,38 @@ class Go2Contract(unittest.TestCase):
 
 
 class OdomTests(unittest.TestCase):
+    def test_recorded_stair_turn_is_small_rotation_despite_large_euler_yaw(self):
+        state=OdometryHealth()
+        before=(-.6623203588797157,-.09343086906080779,.7430395859046043,-.022239350231086075)
+        after=(-.6633807033432366,-.10360713072486892,.7325908055924942,-.11181375790184833)
+        self.assertAlmostEqual(quaternion_distance(before,after),.1815829615091944)
+        state.observe('lio',100.,(0,0,0),before,(0,0,0),100.)
+        state.observe('lio',100.100045,(.005,-.028,-.002),after,(0,0,0),100.1)
+        self.assertIsNone(state.fault)
+
+    def test_quaternion_sign_and_normalization_do_not_create_rotation(self):
+        q=(.5,.5,.5,.5)
+        self.assertAlmostEqual(quaternion_distance(q,tuple(-x*1.005 for x in q)),0)
+
+    def test_true_roll_jump_still_latches_even_without_yaw_change(self):
+        state=self.seed()
+        state.observe('lio',100.1,(0,0,0),(math.sin(.4),0,0,math.cos(.4)),(0,0,0),100.1)
+        self.assertEqual(state.fault,'odometry_discontinuity')
+        self.assertAlmostEqual(state.first_fault_context['rotation_delta_rad'],.8)
+        self.assertAlmostEqual(state.first_fault_context['yaw_delta_rad'],0)
+
+    def test_ten_centimetre_step_does_not_require_relaxing_jump_protection(self):
+        state=self.seed()
+        state.observe('lio',100.1,(.03,0,.10),(0,0,0,1),(.3,0,1),100.1)
+        self.assertIsNone(state.fault)
+        state.observe('lio',100.2,(1.,0,.1),(0,0,0,1),(.3,0,0),100.2)
+        context=state.first_fault_context.copy()
+        self.assertAlmostEqual(context['translation_delta_m'],.97)
+        self.assertAlmostEqual(context['translation_limit_m'],.37)
+        state.observe('lio',99,(0,0,0),(0,0,0,1),(0,0,0),100.3)
+        self.assertEqual(state.fault,'odometry_discontinuity')
+        self.assertEqual(state.first_fault_context,context)
+
     def seed(self):
         state=OdometryHealth()
         for stream in ('lio','nav'): state.observe(stream,100,(0,0,0),(0,0,0,1),(0,0,0),100)

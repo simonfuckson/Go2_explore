@@ -12,6 +12,7 @@
   <arg name="lidar_blind" default="0.70"/>
   <arg name="terrain_geometry_checks" default="false"/>
   <arg name="completion_hold_time" default="30.0"/>
+  <arg name="motion_evidence" default="true"/>
   <param name="/exploration/runtime_mode" value="$(eval 'simulation' if not arg('start_sensors') else 'real' if arg('use_real_sdk') else 'observe')"/>
   <param name="/exploration/terrain_geometry_checks" value="$(arg terrain_geometry_checks)"/>
 
@@ -81,6 +82,9 @@
     <param name="completion_hold_time" value="$(arg completion_hold_time)"/>
   </node>
   <node pkg="go2_exploration" type="exploration_dashboard.py" name="go2_exploration_dashboard" output="screen">
+    <param name="session_dir" value="$(arg session_dir)"/>
+  </node>
+  <node if="$(arg motion_evidence)" pkg="go2_exploration" type="record_motion_evidence.py" name="go2_motion_evidence" output="screen">
     <param name="session_dir" value="$(arg session_dir)"/>
   </node>
   <node if="$(arg rviz)" pkg="rviz" type="rviz" name="go2_exploration_rviz" args="-d $(find go2_exploration)/config/go2_exploration.rviz">

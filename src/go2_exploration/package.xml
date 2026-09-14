@@ -45,6 +45,7 @@
   <depend>livox_ros_driver2</depend>
   <exec_depend>rosgraph</exec_depend>
   <exec_depend>rosbag</exec_depend>
+  <exec_depend>tf2_msgs</exec_depend>
   <exec_depend>realsense2_camera</exec_depend>
   <exec_depend>go2_exploration_safety</exec_depend>
 

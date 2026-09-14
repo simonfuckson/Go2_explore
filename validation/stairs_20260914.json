@@ -1,0 +1,357 @@
+{
+  "passed": true,
+  "date": "2026-09-14",
+  "backup_tag": "backup-before-stairs-20260914",
+  "backup_commit": "1119cb692e4bf7701fcfdf3b09b49ab2d46ff142",
+  "source_sha256": {
+    "src/go2_exploration_safety/src/go2_exploration_safety/odometry_health.py": "3c496e2f54e3860ae62528333ffb9fccc1192851cb05212c8713f1bdadf28e5a",
+    "src/go2_exploration_safety/test/test_go2_contract.py": "68271635b1205293ff15b371172366cba47f2b951e9c1b2481bdafc98feff74f",
+    "src/go2_exploration/scripts/odom_health.py": "a84de076ab38b38a24e6ecb43aec1b7c7498efd74e0bf49a4697a7cacc358be2",
+    "src/go2_exploration/scripts/record_motion_evidence.py": "099687e1693dbb2490c3416e30458654d8ee1ad71b08e4f98fa7b88124c8be72",
+    "src/go2_exploration/scripts/exploration_dashboard.py": "5b73689260e92d5d37b599ba2b0a387cb3efc1c8641e5462bc9c24e7469f67f8",
+    "src/go2_exploration/launch/go2_exploration.launch": "19ff437f910593516b64ddcac909df08423ec7450014544b4001be9368bc6c71",
+    "src/go2_exploration/CMakeLists.txt": "54e9ef3234099f94504192370455ee7289eb21f6705e00ba8e6eaf3ec15ef1d5",
+    "src/go2_exploration/package.xml": "303b40568e936b7762f1aa1c3d650b2dba7f41b53cd7131d1e5dfb7abbb979ef",
+    "README.md": "ffce62a98354b5bd98ac70ba2167913703d6f28a3e3d7736a5087481bfe6b7d1",
+    "STARTUP_GUIDE_ZH.md": "b7c270fd9598ef23bf0e22476b91b156f4531e10eb16aa5c40a7563c40ea6add",
+    "STAIRS_DIAGNOSIS_ZH.md": "9735ed9cce4886a98da205235736e1e7698adfd10726bfc9172e66d524eda644"
+  },
+  "cpp_unchanged": true,
+  "unit_tests": {
+    "safety_python": 141,
+    "exploration_python": 65
+  },
+  "recorded_odometry_replay": {
+    "passed": true,
+    "odometry_samples": {
+      "/lio/odometry": 2927,
+      "/odom_nav": 2927
+    },
+    "baseline_fault": "odometry_discontinuity",
+    "candidate_fault": null,
+    "physical_motion": "User remote-controlled two directions up/down stairs",
+    "autonomous_motion": false,
+    "sdk_nonzero_output_samples": 0
+  },
+  "control_mock": {
+    "passed": true,
+    "control": {
+      "real_sdk": false,
+      "directory": "/home/nvidia/go2_explore_ws/artifacts/goal_transitions_cbd793b1",
+      "passed": true,
+      "completed_goals": 3,
+      "stop_tail_samples": 16,
+      "no_stop_transition_faults": true,
+      "motion_commands": 546,
+      "max_forward": 0.3,
+      "stop_result": {
+        "result": "STOPPED",
+        "map_name": "goal_transitions_cbd793b1",
+        "real_sdk": false,
+        "save_status": "saved",
+        "wall_time": 1789216489.6067472
+      }
+    },
+    "recorder": {
+      "reason": "closed",
+      "topics": {
+        "/lio/odometry": 339,
+        "/go2_exploration_safety/status": 40,
+        "/exploration/cmd_vel_shaped": 417,
+        "/cmd_vel_safe": 600,
+        "/exploration/state": 6,
+        "/exploration/odom_status": 411,
+        "/go2/control/enabled": 4,
+        "/odom_nav": 338,
+        "/odom_robot": 338,
+        "/tf_static": 2,
+        "/cloud_registered_terrain": 37,
+        "/terrain/ground_points": 37,
+        "/terrain/obstacle_points": 37,
+        "/tf": 337,
+        "/explore/selection_status": 4,
+        "/cmd_vel_nav": 112
+      },
+      "dropped_messages": 0,
+      "elapsed_s": 21.517802975999075,
+      "cloud_hz_limit": 2,
+      "bytes": 1216216
+    }
+  },
+  "passive_recording": {
+    "reason": "closed",
+    "topics": {
+      "/lio/odometry": 2927,
+      "/odom_nav": 2927,
+      "/terrain/status": 537,
+      "/exploration/odom_status": 5740,
+      "/exploration/state": 1,
+      "/cmd_vel_safe": 15358,
+      "/go2_exploration_safety/status": 554,
+      "/explore/selection_status": 293,
+      "/go2/control/enabled": 1,
+      "/exploration/cmd_vel_shaped": 5852,
+      "/tf_static": 3,
+      "/odom_robot": 2926,
+      "/tf": 11704,
+      "/cloud_registered_terrain": 528,
+      "/terrain/ground_points": 526,
+      "/terrain/obstacle_points": 527
+    },
+    "dropped_messages": 0,
+    "elapsed_s": 293.18356719999974,
+    "cloud_hz_limit": 2,
+    "bytes": 63512624
+  },
+  "rotation_false_positives": [
+    {
+      "topic": "/lio/odometry",
+      "t": 1789215540.9628756,
+      "dt": 0.10004544258117676,
+      "distance": 0.02836852729035871,
+      "yaw_delta": 0.9117725852324032,
+      "quaternion_angle": 0.1815829615091944,
+      "translation_limit": 0.3700545310974121,
+      "angle_limit": 0.5100727081298828,
+      "previous": {
+        "topic": "/lio/odometry",
+        "t": 1789215540.8628302,
+        "xyz": [
+          -0.2390286542208357,
+          0.026699626791574182,
+          -0.23750974465911576
+        ],
+        "q": [
+          -0.6623203588797157,
+          -0.09343086906080779,
+          0.7430395859046043,
+          -0.022239350231086075
+        ],
+        "rpy": [
+          -0.8048824559533819,
+          1.418439774739494,
+          2.50095293020855
+        ]
+      },
+      "current": {
+        "topic": "/lio/odometry",
+        "t": 1789215540.9628756,
+        "xyz": [
+          -0.23417383653583562,
+          -0.0011864784225985511,
+          -0.23939898309121635
+        ],
+        "q": [
+          -0.6633807033432366,
+          -0.10360713072486892,
+          0.7325908055924942,
+          -0.11181375790184833
+        ],
+        "rpy": [
+          -0.035083904238696575,
+          1.4721928334227006,
+          -2.870459791738633
+        ]
+      }
+    },
+    {
+      "topic": "/lio/odometry",
+      "t": 1789215541.0608096,
+      "dt": 0.09793400764465332,
+      "distance": 0.028090632714118203,
+      "yaw_delta": 0.8296559713291995,
+      "quaternion_angle": 0.13502256488754238,
+      "translation_limit": 0.367520809173584,
+      "angle_limit": 0.5066944122314453,
+      "previous": {
+        "topic": "/lio/odometry",
+        "t": 1789215540.9628756,
+        "xyz": [
+          -0.23417383653583562,
+          -0.0011864784225985511,
+          -0.23939898309121635
+        ],
+        "q": [
+          -0.6633807033432366,
+          -0.10360713072486892,
+          0.7325908055924942,
+          -0.11181375790184833
+        ],
+        "rpy": [
+          -0.035083904238696575,
+          1.4721928334227006,
+          -2.870459791738633
+        ]
+      },
+      "current": {
+        "topic": "/lio/odometry",
+        "t": 1789215541.0608096,
+        "xyz": [
+          -0.23261200224398246,
+          -0.026876282227925954,
+          -0.2506541285975199
+        ],
+        "q": [
+          -0.6595387476605102,
+          -0.0964120814124428,
+          0.7238387894889986,
+          -0.17824353487076997
+        ],
+        "rpy": [
+          0.7088064149428293,
+          1.4234838008158988,
+          -2.0408038204094336
+        ]
+      }
+    },
+    {
+      "topic": "/lio/odometry",
+      "t": 1789215542.5627258,
+      "dt": 0.10122036933898926,
+      "distance": 0.031294412441445485,
+      "yaw_delta": 0.6253993481880675,
+      "quaternion_angle": 0.14910656876531964,
+      "translation_limit": 0.3714644432067871,
+      "angle_limit": 0.5119525909423828,
+      "previous": {
+        "topic": "/lio/odometry",
+        "t": 1789215542.4615054,
+        "xyz": [
+          -0.7837033399398137,
+          -0.5733582405490444,
+          -0.7411337485927
+        ],
+        "q": [
+          -0.6449186737746663,
+          -0.08064500469402594,
+          0.7468702383532022,
+          -0.14057430240572905
+        ],
+        "rpy": [
+          0.3737889959665473,
+          1.4033546111300006,
+          -2.4525488153808843
+        ]
+      },
+      "current": {
+        "topic": "/lio/odometry",
+        "t": 1789215542.5627258,
+        "xyz": [
+          -0.812148620025405,
+          -0.5679311651886016,
+          -0.7529976916109227
+        ],
+        "q": [
+          -0.6510887225083987,
+          -0.07068034400823058,
+          0.752709942561384,
+          -0.06719752050855725
+        ],
+        "rpy": [
+          -0.13216287237563248,
+          1.426873656333382,
+          -3.077948163568952
+        ]
+      }
+    },
+    {
+      "topic": "/lio/odometry",
+      "t": 1789215542.6627522,
+      "dt": 0.10002636909484863,
+      "distance": 0.025645924496043464,
+      "yaw_delta": 0.7579032650849292,
+      "quaternion_angle": 0.1867349982077987,
+      "translation_limit": 0.37003164291381835,
+      "angle_limit": 0.5100421905517578,
+      "previous": {
+        "topic": "/lio/odometry",
+        "t": 1789215542.5627258,
+        "xyz": [
+          -0.812148620025405,
+          -0.5679311651886016,
+          -0.7529976916109227
+        ],
+        "q": [
+          -0.6510887225083987,
+          -0.07068034400823058,
+          0.752709942561384,
+          -0.06719752050855725
+        ],
+        "rpy": [
+          -0.13216287237563248,
+          1.426873656333382,
+          -3.077948163568952
+        ]
+      },
+      "current": {
+        "topic": "/lio/odometry",
+        "t": 1789215542.6627522,
+        "xyz": [
+          -0.8283185506544655,
+          -0.5491253107586611,
+          -0.759523534534869
+        ],
+        "q": [
+          -0.6496545836091324,
+          -0.06871603740560292,
+          0.7566703199156413,
+          0.026020283581808322
+        ],
+        "rpy": [
+          -0.7549597455903575,
+          1.3683252636787953,
+          2.447333878525705
+        ]
+      }
+    }
+  ],
+  "route_probe": {
+    "20260912_194110_25744b6e_grid": [
+      "SUMMARY frontiers 1 examined 488 calls 158 pose 2.8427 -5.97619 1.10703 start_clear 1 ms 235.798 global_footprint 158 goal_footprint 321 no_view_gain 9"
+    ],
+    "20260912_194110_25744b6e_gradient": [
+      "SUMMARY frontiers 1 examined 488 calls 158 pose 2.8427 -5.97619 1.10703 start_clear 1 ms 221.384 goal_footprint 321 local_stop_envelope 158 no_view_gain 9"
+    ],
+    "20260912_200736_bbe0a554_grid": [
+      "SUMMARY frontiers 1 examined 582 calls 242 pose 2.56717 -3.18066 -2.61295 start_clear 1 ms 142.7 goal_footprint 334 local_stop_envelope 242 no_view_gain 6"
+    ],
+    "20260912_200736_bbe0a554_gradient": [
+      "SUMMARY frontiers 1 examined 582 calls 242 pose 2.56717 -3.18066 -2.61295 start_clear 1 ms 1177.17 goal_footprint 334 no_global_plan 242 no_view_gain 6"
+    ]
+  },
+  "autonomous_stair_approach_cause": "No accepted goal/path; global footprint or local stop envelope rejects routes before motion",
+  "unchanged_original_files": 1494,
+  "missing_preexisting_map_files": 89,
+  "workspace_validation": true,
+  "manual_stairs_session": {
+    "result": "STOPPED",
+    "map_name": "stairs_observe_20260914_01",
+    "real_sdk": false,
+    "save_status": "saved",
+    "wall_time": 1789215736.9587672,
+    "process_exit": 0,
+    "pcd_present": true,
+    "snapshot_manifest": true,
+    "forced_shutdown": false,
+    "failure": null,
+    "success": true
+  },
+  "manual_evidence_sha256": "db86711f78a488252400eab182e02c7b2f4c2a42f882c8f9142eef4b52224732",
+  "prior_real_session_stop": {
+    "result": "FAULT",
+    "map_name": "room_real_20260914_13",
+    "real_sdk": true,
+    "save_status": "shutdown_save_pending",
+    "wall_time": 1789213934.772007,
+    "process_exit": 0,
+    "pcd_present": true,
+    "snapshot_manifest": true,
+    "forced_shutdown": false,
+    "failure": null,
+    "success": false
+  },
+  "prior_real_saved_manifest_verified": true,
+  "processes_stopped": true,
+  "real_autonomous_motion_tested_after_change": false,
+  "autonomous_stairs_implemented": false
+}
