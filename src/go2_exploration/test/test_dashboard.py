@@ -1,5 +1,6 @@
 import importlib.util
 import io
+import json
 from pathlib import Path
 import threading
 import unittest
@@ -14,6 +15,15 @@ spec=importlib.util.spec_from_file_location('dashboard',str(path))
 module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
 
 class DashboardEvidence(unittest.TestCase):
+    def test_stop_context_is_logged_once_before_later_status_updates(self):
+        context=dict(sequence=1,stamp=123.,reason='local_plan_stale',local_plan_age_s=.36)
+        status=DiagnosticStatus(name='gate',level=2,values=[KeyValue(key='stop_context_json',value=json.dumps(context))])
+        for _ in range(3):self.node.receive(DiagnosticArray(status=[status]),'/go2_exploration_safety/status')
+        rows=[json.loads(line) for line in self.node.log.getvalue().splitlines()]
+        self.assertEqual(len(rows),1)
+        self.assertEqual(rows[0]['event'],'safety_stop_context')
+        self.assertEqual(rows[0]['context'],context)
+
     def test_waiting_route_obstruction_is_not_reported_as_gait_failure_or_completion(self):
         text=module.selection_explanation('WAITING reason=global_footprint waiting_s=123.0 blocked_x=-2.025 blocked_y=-6.025 blocked_frame=map')
         self.assertIn('机身范围受阻',text);self.assertIn('123.0',text);self.assertIn('-2.025',text)

@@ -109,6 +109,16 @@ class Dashboard:
         with self.lock:
             self.latest[topic]=(value,now)
             if topic=='/go2/control/enabled' and value:self.saw_enabled=True
+            if topic=='/go2_exploration_safety/status':
+                for status in value:
+                    try:context=json.loads(status['values'].get('stop_context_json','null'))
+                    except (ValueError,TypeError):continue
+                    if not isinstance(context,dict):continue
+                    token=(context.get('stamp'),context.get('sequence'))
+                    if token!=getattr(self,'last_stop_token',None):
+                        self.last_stop_token=token
+                        if hasattr(self,'log') and not self.log.closed:
+                            self.log.write(json.dumps(dict(event='safety_stop_context',context=context),ensure_ascii=False)+'\n')
             # Capture the full terrain reason at the moment its gate closes,
             # including during SDK preparation. It must survive later recovery.
             if topic=='/terrain/status' and self.saw_enabled and not self.first_failure:
@@ -205,6 +215,20 @@ class Dashboard:
         target=value('/explore/selected_goal')
         row('最近选定目标',('x %.2f / y %.2f m (%s)'%tuple(target)) if target else '尚无目标','/explore/selected_goal',0,None)
         row('当前执行目标 / TEB','活动目标 '+g.get('move_base_status_live_goal_count','0')+' | 轨迹 '+g.get('local_plan_poses','0')+' 点','/go2_exploration_safety/status')
+        recovery_reason=g.get('auto_recovery_reason','')
+        recovery_text={'not_latched':'当前未锁停','ready':'停稳与停车范围检查通过',
+            'recovery_inhibited':'当前故障禁止自动恢复','inputs_changed_during_check':'输入更新，正在重新检查',
+            'input_health_not_ready':'感知或定位数据未就绪',
+            'stationary_or_forward_stop_region_blocked':'当前机身或前方停车范围仍受阻',
+            'waiting_for_control_disable':'等待控制禁用','waiting_for_goal_cancel':'等待目标取消',
+            'waiting_for_shaper_zero':'等待整形速度归零','move_base_status_stale':'导航状态过期',
+            'waiting_for_zero_output':'等待运动输出归零','stationary_tf_stale':'停稳判定所需 TF 过期',
+            'waiting_for_measured_standstill':'等待位姿连续确认停稳',
+            'collision_check_budget_exhausted':'本轮检查未完成，保持停车并重查'}.get(recovery_reason,recovery_reason)
+        row('自动恢复准入',recovery_text or '等待数据','/go2_exploration_safety/status',
+            0 if recovery_reason in ('ready','not_latched') else 1)
+        row('规划停车请求','已要求停车，安全输出立即归零' if g.get('raw_planner_stop')=='True' else '无停车请求',
+            '/go2_exploration_safety/status')
         for topic,label in (('/cmd_vel_nav','规划速度'),('/exploration/cmd_vel_shaped','整形速度'),('/cmd_vel_safe','安全输出速度')):
             v=value(topic)
             row(label,('前进 %.3f / 横移 %.3f m/s / 转向 %.3f rad/s'%tuple(v)) if v else '尚无速度指令',topic,0,.6)

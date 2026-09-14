@@ -1,0 +1,220 @@
+{
+  "passed": true,
+  "backup_tag": "backup-before-stop-fix-20260914",
+  "backup_commit": "bc8d1d575cb3039139ac50d431ada76b11c427e4",
+  "source_sha256": {
+    "README.md": "88ef2a9dd5338db84d409750e474fe84ea32d81f76aea9a1753b7ffab4e43e4e",
+    "STARTUP_GUIDE_ZH.md": "248e48ce6f08ae03a77f94fb2a0a88dc014faee709138d09d681921e8230a46a",
+    "STOP_TIMING_FIX_ZH.md": "5179988932f7b9d5c49b760e11cb187bbbdc4e907b978ae14e123034b9ff9d93",
+    "scripts/verify_goal_transitions.py": "72fc8c4b0111117aea35780396ffc19507547c31d7aaa0bc9c0341f3008f05e5",
+    "src/go2_exploration/scripts/exploration_dashboard.py": "933a2fbc876967fc371e1e5d1d157733f515548f8e97cb8ed4e0ea9a3a84765c",
+    "src/go2_exploration/test/test_dashboard.py": "d45317b0bfb3cc466e88774f0d0e8c9e4da6567e9d4cf8f60a80e064a25de665",
+    "src/go2_exploration_safety/scripts/cmd_vel_safety_gate.py": "b074e9107762574b76f0cb90b8b68ec86ccaa48b5dc868565bf3dfe0c5f58f09",
+    "src/go2_exploration_safety/test/test_planner_stop.py": "5df256eb9a239171f2c0ef0795063dcd6063d65aae4603ed4e7912dcd0ae3fd9"
+  },
+  "python_only": true,
+  "unit_tests": {
+    "exploration_python": 65,
+    "safety_python": 137
+  },
+  "baseline_new_regression": {
+    "tests": 11,
+    "failures": 5,
+    "errors": 1
+  },
+  "controls": {
+    "goal_transitions": {
+      "real_sdk": false,
+      "directory": "/home/nvidia/go2_explore_ws/artifacts/goal_transitions_8128a9a3",
+      "passed": true,
+      "completed_goals": 3,
+      "stop_tail_samples": 9,
+      "no_stop_transition_faults": true,
+      "motion_commands": 565,
+      "max_forward": 0.3,
+      "stop_result": {
+        "result": "STOPPED",
+        "map_name": "goal_transitions_8128a9a3",
+        "real_sdk": false,
+        "save_status": "saved",
+        "wall_time": 1789211749.1158364
+      }
+    },
+    "auto_raw": {
+      "case": "raw",
+      "real_sdk": false,
+      "directory": "/home/nvidia/go2_explore_ws/artifacts/auto_reenable_raw_094c82e4",
+      "first_fault": "local_costmap_stale",
+      "reenabled_after_clear_sec": 12.288941056000112,
+      "new_goal_and_mock_motion": true,
+      "operator_stop_after_recovery_stays_stopped": true,
+      "passed": true,
+      "stop_result": {
+        "result": "STOPPED",
+        "map_name": "auto_reenable_raw_094c82e4",
+        "real_sdk": false,
+        "save_status": "saved",
+        "wall_time": 1789211792.6628008
+      },
+      "goal_count": 2,
+      "command_count": 1531,
+      "states": [
+        "WAITING_FOR_READY",
+        "WAITING_FOR_GOAL",
+        "EXPLORING",
+        "WAITING_FOR_OBSTACLE",
+        "FAULT_STOPPED",
+        "WAITING_FOR_FAULT_RECOVERY",
+        "AUTO_REENABLING",
+        "WAITING_FOR_GOAL",
+        "EXPLORING",
+        "FAULT_STOPPED",
+        "STOPPED"
+      ],
+      "recovery_status": [
+        "{\"enabled\": true, \"reason\": \"gate_recovery_inhibited: operator_stop\", \"stable_seconds\": 0.0, \"required_seconds\": 10.0, \"attempts_in_five_minutes\": 1}",
+        "{\"enabled\": true, \"reason\": \"gate_recovery_inhibited: operator_stop\", \"stable_seconds\": 0.0, \"required_seconds\": 10.0, \"attempts_in_five_minutes\": 1}",
+        "{\"enabled\": true, \"reason\": \"gate_recovery_inhibited: operator_stop\", \"stable_seconds\": 0.0, \"required_seconds\": 10.0, \"attempts_in_five_minutes\": 1}"
+      ]
+    },
+    "obstacle": {
+      "fault": "obstacle",
+      "directory": "/home/nvidia/go2_explore_ws/artifacts/simulation_obstacle_24a9a364",
+      "obstacle_recovery": true,
+      "passed": true,
+      "goal_count": 3,
+      "command_count": 695,
+      "nonzero_commands": 68,
+      "max_forward": 0.3,
+      "max_yaw": 0.5,
+      "states": [
+        "WAITING_FOR_READY",
+        "WAITING_FOR_GOAL",
+        "EXPLORING",
+        "WAITING_FOR_OBSTACLE",
+        "RECOVERING_AFTER_OBSTACLE",
+        "WAITING_FOR_GOAL",
+        "EXPLORING",
+        "STOPPED"
+      ],
+      "stop_result": {
+        "result": "STOPPED",
+        "map_name": "simulation_obstacle_24a9a364",
+        "real_sdk": false,
+        "save_status": "saved",
+        "wall_time": 1789211816.3342006
+      }
+    },
+    "cloud": {
+      "fault": "cloud",
+      "directory": "/home/nvidia/go2_explore_ws/artifacts/simulation_cloud_7035d22d",
+      "fault_stop_and_no_rearm": true,
+      "passed": true,
+      "goal_count": 1,
+      "command_count": 603,
+      "nonzero_commands": 74,
+      "max_forward": 0.3,
+      "max_yaw": 0.5,
+      "states": [
+        "WAITING_FOR_READY",
+        "WAITING_FOR_GOAL",
+        "EXPLORING",
+        "FAULT_STOPPED",
+        "STOPPED"
+      ],
+      "stop_result": {
+        "result": "STOPPED",
+        "map_name": "simulation_cloud_7035d22d",
+        "real_sdk": false,
+        "save_status": "saved",
+        "wall_time": 1789211837.9084108
+      }
+    },
+    "takeover": {
+      "case": "takeover",
+      "real_sdk": false,
+      "directory": "/home/nvidia/go2_explore_ws/artifacts/auto_reenable_takeover_f4ddd10a",
+      "first_fault": "control_disabled_or_manual_takeover",
+      "nonrecoverable_or_disabled_remains_stopped": true,
+      "passed": true,
+      "stop_result": {
+        "result": "STOPPED",
+        "map_name": "auto_reenable_takeover_f4ddd10a",
+        "real_sdk": false,
+        "save_status": "saved",
+        "wall_time": 1789211868.4655163
+      },
+      "goal_count": 1,
+      "command_count": 1023,
+      "states": [
+        "WAITING_FOR_READY",
+        "WAITING_FOR_GOAL",
+        "EXPLORING",
+        "FAULT_STOPPED",
+        "STOPPED"
+      ],
+      "recovery_status": [
+        "{\"enabled\": true, \"reason\": \"gate_recovery_inhibited: control_disabled_or_manual_takeover\", \"stable_seconds\": 0.0, \"required_seconds\": 10.0, \"attempts_in_five_minutes\": 0}",
+        "{\"enabled\": true, \"reason\": \"gate_recovery_inhibited: control_disabled_or_manual_takeover\", \"stable_seconds\": 0.0, \"required_seconds\": 10.0, \"attempts_in_five_minutes\": 0}",
+        "{\"enabled\": true, \"reason\": \"gate_recovery_inhibited: control_disabled_or_manual_takeover\", \"stable_seconds\": 0.0, \"required_seconds\": 10.0, \"attempts_in_five_minutes\": 0}"
+      ]
+    }
+  },
+  "stop_diagnosis": {
+    "first_latched_reason": "local_plan_stale",
+    "goal_reached_ros_time": 1789210773.5450673,
+    "stop_ros_time": 1789210773.545213,
+    "exact_callback_order_available": false,
+    "recorded_battery_percent": [
+      63,
+      64
+    ],
+    "no_step_protection_triggered": false,
+    "code_bugs_reproduced": [
+      "planner_stop_shaper_tail",
+      "latched_snapshot_update_resets_recovery"
+    ]
+  },
+  "post_stop_geometry_snapshot": {
+    "snapshot": "/home/nvidia/go2_explore_ws/artifacts/efficiency_20260914/20260912_185749_a966cab6/snapshot_1789210916418454392",
+    "snapshot_is_after_stop": true,
+    "scope": "local_costmap_and_both_obstacle_clouds",
+    "map_stamp": 1789210916.6321926,
+    "frame": "odom",
+    "stationary_footprint_blocked": false,
+    "forward_stop_region_blocked": false,
+    "map_allows_recovery": true,
+    "cloud_geometry": {
+      "classified": {
+        "point_count": 84,
+        "stationary_footprint_blocked": false,
+        "forward_stop_region_blocked": false
+      },
+      "raw_vertical_cells": {
+        "point_count": 51,
+        "stationary_footprint_blocked": false,
+        "forward_stop_region_blocked": false
+      }
+    },
+    "all_geometry_allows_recovery": true
+  },
+  "unchanged_original_files": 1494,
+  "missing_preexisting_map_files": 89,
+  "workspace_validation": true,
+  "real_motion_tested_after_change": false,
+  "autonomous_stairs_implemented": false,
+  "prior_real_session_stop": {
+    "result": "STOPPED",
+    "map_name": "room_real_20260914_12",
+    "real_sdk": true,
+    "save_status": "saved",
+    "wall_time": 1789210945.8627515,
+    "process_exit": 0,
+    "pcd_present": true,
+    "snapshot_manifest": true,
+    "forced_shutdown": false,
+    "failure": null,
+    "success": true
+  },
+  "processes_stopped": true
+}

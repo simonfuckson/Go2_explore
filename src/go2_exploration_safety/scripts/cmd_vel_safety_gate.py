@@ -2,6 +2,8 @@
 
 """Fail-closed velocity gate for GO2 exploration autonomous motion."""
 
+import collections
+import json
 import math
 import struct
 import threading
@@ -448,6 +450,16 @@ class CmdVelSafetyGate:
         self.last_command_caller_id = ""
         self.command_goal_generation = None
         self.terminal_stop_drain_until = None
+        self.raw_command = Twist()
+        self.raw_command_was_zero = False
+        self.planner_stop_since = None
+        # Original shaper bounds plus its input timeout and turn-release dwell.
+        # Repeated zero requests cannot extend this nonzero-tail allowance.
+        self.planner_stop_drain_seconds = 1.5
+        self.motion_events = collections.deque(maxlen=80)
+        self.stop_context = None
+        self.stop_sequence = 0
+        self.auto_recovery_reason = 'not_latched'
         self.cloud_points = ()
         self.cloud_frame = ""
         self.cloud_stamp = rospy.Time(0)
@@ -616,16 +628,33 @@ class CmdVelSafetyGate:
     def raw_command_callback(self, message):
         caller = getattr(message, '_connection_header', {}).get('callerid', '')
         fault = command_problem(message, caller, '/move_base')
+        now = time.monotonic()
+        stopping = not fault and not motion_requested(message.linear.x, message.angular.z,
+                                                       self.linear_deadband,self.angular_deadband)
         with self.output_lock:
             with self.lock:
                 if fault:
                     self.latch_locked(fault, self.command)
                 else:
-                    self.upstream.raw_time = time.monotonic()
+                    previous_generation = self.upstream.raw_generation
+                    self.upstream.raw_time = now
                     self.upstream.raw_generation = self.goal_generation if self.goal_tracker.has_current_goal else None
-                    self.update_goal_handshake_locked(time.monotonic())
-            if fault:
+                    changed = (stopping != self.raw_command_was_zero or
+                               previous_generation != self.upstream.raw_generation)
+                    if changed:
+                        self.state_generation += 1
+                        self.planner_stop_since = now if stopping else None
+                    self.raw_command = copy_twist(message)
+                    self.raw_command_was_zero = stopping
+                    self.record_motion_event_locked('raw',now,v=message.linear.x,w=message.angular.z)
+                    self.update_goal_handshake_locked(now)
+                    if stopping:
+                        # A valid planner stop overrides the shaper's deceleration
+                        # tail immediately, including before action terminal status.
+                        self.last_output = Twist()
+            if fault or stopping:
                 self.output_publisher.publish(Twist())
+            if fault:
                 self.cancel_all_goals()
 
     def command_callback(self, message):
@@ -684,6 +713,8 @@ class CmdVelSafetyGate:
                         new_command.linear.x, new_command.angular.z)
                 if new_command != self.command or valid != self.command_valid:
                     self.command_generation += 1
+                    self.record_motion_event_locked('shaped',receive_time,
+                                                    v=message.linear.x,w=message.angular.z,valid=valid)
                 self.command = new_command
                 self.command_valid = valid
                 self.last_command_caller_id = caller_id
@@ -856,6 +887,7 @@ class CmdVelSafetyGate:
                     self.local_plan_poses = len(message.poses)
                     self.last_local_plan_receive = now
                     self.local_plan_goal_generation = self.goal_generation
+                    self.record_motion_event_locked('plan',now,poses=len(message.poses))
                     self.update_goal_handshake_locked(now)
                     if empty_plan:
                         self.state_generation += 1
@@ -896,6 +928,7 @@ class CmdVelSafetyGate:
                     self.local_plan_goal_generation = None
                     self.goal_handshake_generation = None
                     self.state_generation += 1
+                    self.record_motion_event_locked('goal',now,goal_id=goal_key)
             if changed or cancel_needed:
                 self.output_publisher.publish(Twist())
             if cancel_needed:
@@ -957,6 +990,8 @@ class CmdVelSafetyGate:
                 )
                 if status_live_changed or transitioned:
                     self.state_generation += 1
+                    self.record_motion_event_locked('status',now,transition=tracker_result,
+                                                    live_goals=len(live_goal_ids))
                 self.last_move_base_status_receive = now
                 if self.goal_handshake_expired_locked(now) and self.armed:
                     cancel_needed = self.latch_locked(
@@ -1263,6 +1298,9 @@ class CmdVelSafetyGate:
                 self.last_health_ok = False
                 self.last_health_reason = 'collision_check_budget_exhausted'
                 self.last_collision_clear = False
+                self.auto_recovery_window.reset()
+                self.auto_recovery_ready = False
+                self.auto_recovery_reason = 'collision_check_budget_exhausted'
                 self.last_cycle_ms = (time.monotonic() - started) * 1000.0
             self.output_publisher.publish(Twist())
             self.publish_diagnostics(DiagnosticStatus.ERROR if self.latched_stop else DiagnosticStatus.WARN)
@@ -1276,6 +1314,7 @@ class CmdVelSafetyGate:
             command_generation = self.command_generation
             safety_input_generation = self.safety_input_generation
             command = copy_twist(self.command)
+            shaped_command = copy_twist(command)
             command_valid = self.command_valid
             command_receive = self.last_command_receive
             command_goal_generation = self.command_goal_generation
@@ -1305,6 +1344,14 @@ class CmdVelSafetyGate:
                           and not latched and self.stopped_window.ready)
             try_auto_recovery = (latched and self.latched_reason in RECOVERABLE_FAULTS
                                  and not self.auto_recovery_inhibited)
+            planner_stopping = (self.raw_command_was_zero and self.planner_stop_since is not None
+                                and self.upstream.raw_age(now,goal_generation) <= self.command_timeout)
+            stop_tail_expired = (planner_stopping
+                                and now-self.planner_stop_since > self.planner_stop_drain_seconds
+                                and motion_requested(command.linear.x,command.angular.z,
+                                                     self.linear_deadband,self.angular_deadband))
+            if planner_stopping and not stop_tail_expired:
+                command = Twist()
 
         command_age = self.age(now, command_receive)
         if current_goal_active:
@@ -1362,7 +1409,7 @@ class CmdVelSafetyGate:
         health_ok = health_reason == "healthy"
         # Keep checking the actual interrupted braking envelope, including while
         # awaiting supervisor resume. A zero command has no swept region.
-        probe = trip_command if latched or obstacle_pending else command
+        probe = trip_command if latched or obstacle_pending else shaped_command
         cloud_blocked = False
         raw_cloud_blocked = False
         costmap_blocked = False
@@ -1435,7 +1482,7 @@ class CmdVelSafetyGate:
                     elif self.latch_locked(fault, probe):
                         cancel_needed = True
                         newly_latched_reason = fault
-                if not current and not self.latched_stop and (not self.obstacle_hold or obstacle_pending):
+                if not current and (self.latched_stop or not self.obstacle_hold or obstacle_pending):
                     return False
                 checked_at = time.monotonic()
                 # Freshness is evaluated at publication, not just check start.
@@ -1468,7 +1515,7 @@ class CmdVelSafetyGate:
                     health_ok, health_reason, collision_clear = False, upstream_problem, False
                 if self.armed and not self.bridge_enabled:
                     health_ok, health_reason, collision_clear = False, 'control_disabled_or_manual_takeover', False
-                if checked_at > deadline and not self.latched_stop:
+                if checked_at > deadline:
                     return False
                 self.last_health_ok = health_ok and current
                 self.last_cycle_ms = (time.monotonic() - now) * 1000.0
@@ -1543,6 +1590,8 @@ class CmdVelSafetyGate:
 
                     if not health_ok:
                         fault_reason = health_reason
+                    elif stop_tail_expired:
+                        fault_reason = 'shaper_stop_timeout'
                     else:
                         fault_reason = motion_fault_reason(
                             linear_x=command.linear.x,
@@ -1621,6 +1670,11 @@ class CmdVelSafetyGate:
                         state = "WAITING_FOR_COMMAND"
                         reason = "command_stale"
                         level = DiagnosticStatus.WARN
+                    elif planner_stopping:
+                        output = Twist()
+                        state = 'WAITING_FOR_PLANNER'
+                        reason = 'planner_requested_stop'
+                        level = DiagnosticStatus.OK
                     else:
                         output = self.sanitized_command(command)
                         state = "PASS"
@@ -1741,6 +1795,27 @@ class CmdVelSafetyGate:
                                   -transform_sine*dx + transform_cosine*dy))
         return points
 
+    def record_motion_event_locked(self, kind, now, **values):
+        self.motion_events.append(dict(kind=kind,t=now,goal_generation=self.goal_generation,**values))
+
+    def capture_stop_context_locked(self, reason, now):
+        def age(then):
+            value=self.age(now,then)
+            return value if math.isfinite(value) else None
+        self.stop_sequence += 1
+        self.stop_context = dict(sequence=self.stop_sequence,stamp=rospy.Time.now().to_sec(),reason=reason,
+            goal_id=self.goal_tracker.current_id,goal_generation=self.goal_generation,
+            raw_generation=self.upstream.raw_generation,local_plan_generation=self.local_plan_goal_generation,
+            raw_command=[self.raw_command.linear.x,self.raw_command.angular.z],
+            shaped_command=[self.command.linear.x,self.command.angular.z],
+            previous_output=[self.last_output.linear.x,self.last_output.angular.z],
+            planner_stop_requested=self.raw_command_was_zero,raw_command_age_s=age(self.upstream.raw_time),
+            local_plan_age_s=age(self.last_local_plan_receive),local_plan_poses=self.local_plan_poses,
+            cloud_age_s=age(self.last_cloud_receive),raw_cloud_age_s=age(self.last_raw_cloud_receive),
+            costmap_age_s=age(self.last_costmap_receive),status_age_s=age(self.last_move_base_status_receive),
+            events=[dict(seconds_before_stop=round(now-e['t'],6),
+                         **{k:v for k,v in e.items() if k!='t'}) for e in self.motion_events])
+
     def latch_locked(self, reason, command):
         # A later operator stop must revoke recovery even if the first recorded
         # fault was a recoverable terrain timeout. Preserve the first cause.
@@ -1750,6 +1825,7 @@ class CmdVelSafetyGate:
             self.auto_recovery_window.reset()
         if self.latched_stop:
             return False
+        self.capture_stop_context_locked(reason,time.monotonic())
         self.armed = False
         self.latched_stop = True
         self.latched_reason = reason
@@ -1762,17 +1838,21 @@ class CmdVelSafetyGate:
         return True
 
     def update_auto_recovery_locked(self, now, current, healthy, costmap, transform, clear):
-        eligible = (current and healthy and clear and self.latched_stop
-                    and self.latched_reason in RECOVERABLE_FAULTS
-                    and not self.auto_recovery_inhibited and not self.armed
-                    and not self.bridge_enabled and not self.move_base_has_live_goal
-                    and not self.goal_tracker.has_current_goal
-                    and self.command_valid and self.last_shaped_was_zero
-                    and self.age(now, self.last_command_receive) <= self.command_timeout
-                    and self.age(now, self.last_move_base_status_receive) <= self.move_base_status_timeout
-                    and not motion_requested(self.last_output.linear.x, self.last_output.angular.z,
-                                             self.linear_deadband, self.angular_deadband)
-                    and transform is not None and self.transform_age(transform) <= .20)
+        conditions = (
+            (self.latched_stop,'not_latched'),
+            (self.latched_reason in RECOVERABLE_FAULTS and not self.auto_recovery_inhibited,'recovery_inhibited'),
+            (current,'inputs_changed_during_check'),(healthy,'input_health_not_ready'),
+            (clear,'stationary_or_forward_stop_region_blocked'),
+            (not self.armed and not self.bridge_enabled,'waiting_for_control_disable'),
+            (not self.move_base_has_live_goal and not self.goal_tracker.has_current_goal,'waiting_for_goal_cancel'),
+            (self.command_valid and self.last_shaped_was_zero and
+             self.age(now,self.last_command_receive)<=self.command_timeout,'waiting_for_shaper_zero'),
+            (self.age(now,self.last_move_base_status_receive)<=self.move_base_status_timeout,'move_base_status_stale'),
+            (not motion_requested(self.last_output.linear.x,self.last_output.angular.z,
+                                  self.linear_deadband,self.angular_deadband),'waiting_for_zero_output'),
+            (transform is not None and self.transform_age(transform)<=.20,'stationary_tf_stale'))
+        self.auto_recovery_reason = next((reason for ready,reason in conditions if not ready),'waiting_for_measured_standstill')
+        eligible = all(ready for ready,_ in conditions)
         self.auto_recovery_checked_at = now
         if not eligible:
             self.auto_recovery_window.reset()
@@ -1782,6 +1862,7 @@ class CmdVelSafetyGate:
         self.auto_recovery_ready = self.auto_recovery_window.update(
             now, transform.header.stamp.to_sec(), costmap.header.frame_id,
             (t.translation.x, t.translation.y, t.translation.z, yaw_from_quaternion(t.rotation)), True)
+        if self.auto_recovery_ready:self.auto_recovery_reason='ready'
 
     def begin_obstacle_hold_locked(self, reason, command):
         self.obstacle_hold = True
@@ -1917,6 +1998,11 @@ class CmdVelSafetyGate:
                 "armed": self.armed,
                 "auto_recovery_inhibited": self.auto_recovery_inhibited,
                 "auto_recovery_ready": self.auto_recovery_ready,
+                "auto_recovery_reason": self.auto_recovery_reason,
+                "raw_planner_stop": self.raw_command_was_zero,
+                "raw_linear_x": self.raw_command.linear.x,
+                "raw_angular_z": self.raw_command.angular.z,
+                "stop_context_json": json.dumps(self.stop_context,ensure_ascii=False,separators=(',',':')),
                 "latched_stop": self.latched_stop,
                 "latched_reason": self.latched_reason,
                 "paused": self.paused,
